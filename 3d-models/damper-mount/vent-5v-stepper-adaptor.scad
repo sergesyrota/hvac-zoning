@@ -1,7 +1,7 @@
 wall_thickness=2;
 // Piece that will be rotated
-damper_arm_diameter=8.5;
-damper_arm_cut_width=6;
+damper_arm_diameter=9;
+damper_arm_cut_width=5.1;
 damper_arm_depth=12;
 // stepper mount
 stepper_shaft_diameter=5.8;
@@ -14,6 +14,8 @@ marker_height=5;
 // Connecting the two
 mount_length=1.2*(damper_arm_depth+stepper_shaft_depth);
 mount_diameter=max(damper_arm_diameter,stepper_shaft_diameter)+wall_thickness*2;
+// Pin offset degrees to achieve fully closed vent on button press
+pin_degrees_offset=0;
 
 /* 
  * motor-to-damper adaptor
@@ -21,6 +23,7 @@ mount_diameter=max(damper_arm_diameter,stepper_shaft_diameter)+wall_thickness*2;
 translate([0,0,-mount_length]) motor_to_damper_adaptor();
 
 module motor_to_damper_adaptor() {
+    rotate([0,0,pin_degrees_offset]) button_pin();
     difference() {
         // main body
         cylinder(mount_length, mount_diameter/2, mount_diameter/2);
@@ -29,7 +32,12 @@ module motor_to_damper_adaptor() {
         // Damper cutout
         translate([0,0,mount_length-damper_arm_depth/2]) mount_cutout(damper_arm_diameter/2, damper_arm_cut_width, damper_arm_depth);
     }
+    
+}
+
+module button_pin() {
     translate([mount_diameter/2,0,mount_length-marker_distance]) scale([2*marker_size/marker_height, 0.6, 1]) sphere(d=marker_height, $fn=50);
+    translate([-mount_diameter/2,0,mount_length-marker_distance]) scale([2*marker_size/marker_height, 0.6, 1]) sphere(d=marker_height, $fn=50);
 }
 
 // Motor mount
