@@ -29,6 +29,10 @@ MiniStepper::MiniStepper(unsigned int steps, byte blue, byte yellow, byte pink, 
 	orangePin=orange;
 	setSpeed(MINI_STEPPER_DEFAULT_RPM); // Default RPM
 	stepsPerRevolution=MINI_STEPPER_STEPS_PER_REV; // This is specific to this motor, so hardcoding steps
+	pinMode(bluePin, OUTPUT);
+	pinMode(yellowPin, OUTPUT);
+	pinMode(pinkPin, OUTPUT);
+	pinMode(orangePin, OUTPUT);
 }
 
 void MiniStepper::setZero()
@@ -38,15 +42,25 @@ void MiniStepper::setZero()
 
 void MiniStepper::step(long steps)
 {
+	startIdleHold(); // engage all pins at this stage, so we can do incremental updates
 	long absSteps = abs(steps);
-	byte stepDirection = (steps<0 ? -1 : 1);
-	for (long i=0; i<absSteps; i+=stepDirection) {
+	int stepDirection = (steps<0 ? -1 : 1);
+	unsigned long startTime;
+	unsigned long sleepTime;
+	for (long i=0; i<absSteps; i++) {
+		startTime = micros();
 		incrementStep(stepDirection);
-		executeStep();
+		if (stepDirection > 0) {
+			executePositiveStep();
+		} else {
+			executeNegativeStep();
+		}
+		delayMicroseconds(stepMicros - (startTime - micros())); // Always doing subtraction calculations to make sure we don't have weird rollover incidents.
 	}
+	
 }
 
-void MiniStepper::incrementStep(byte stepDirection)
+void MiniStepper::incrementStep(int stepDirection)
 {
 	currentStep+=stepDirection;
 	currentPosition+=stepDirection;
@@ -64,9 +78,117 @@ void MiniStepper::incrementStep(byte stepDirection)
 	}
 }
 
-void MiniStepper::executeStep()
+// Idea here is that we only make changes needed at this specific step, leaving all other pins intact. 
+// This way we won't have a moment when some wrong combination of pins is enagaged.
+void MiniStepper::executePositiveStep()
 {
-	// TODO
+	switch(currentStep) {
+		case 0:
+			digitalWrite(bluePin, LOW);
+			break;
+		case 1:
+			digitalWrite(yellowPin, HIGH);
+			break;
+		case 2:
+			digitalWrite(orangePin, LOW);
+			break;
+		case 3:
+			digitalWrite(pinkPin, HIGH);
+			break;
+		case 4:
+			digitalWrite(yellowPin, LOW);
+			break;
+		case 5:
+			digitalWrite(bluePin, HIGH);
+			break;
+		case 6:
+			digitalWrite(pinkPin, LOW);
+			break;
+		case 7:
+			digitalWrite(orangePin, HIGH);
+			break;
+	}
+}
+void MiniStepper::executeNegativeStep()
+{
+	switch(currentStep) {
+		case 0:
+			digitalWrite(yellowPin, LOW);
+			break;
+		case 1:
+			digitalWrite(orangePin, HIGH);
+			break;
+		case 2:
+			digitalWrite(pinkPin, LOW);
+			break;
+		case 3:
+			digitalWrite(yellowPin, HIGH);
+			break;
+		case 4:
+			digitalWrite(bluePin, LOW);
+			break;
+		case 5:
+			digitalWrite(pinkPin, HIGH);
+			break;
+		case 6:
+			digitalWrite(orangePin, LOW);
+			break;
+		case 7:
+			digitalWrite(bluePin, HIGH);
+			break;
+	}
+}
+
+void MiniStepper::startIdleHold()
+{
+	switch (currentStep) {
+		case 0:
+		case 1:
+		case 7:
+			digitalWrite(orangePin, HIGH);
+			break;
+		default:
+			digitalWrite(orangePin, LOW);
+			break;
+	}
+	switch (currentStep) {
+		case 1:
+		case 2:
+		case 3:
+			digitalWrite(yellowPin, HIGH);
+			break;
+		default:
+			digitalWrite(yellowPin, LOW);
+			break;
+	}
+	switch (currentStep) {
+		case 3:
+		case 4:
+		case 5:
+			digitalWrite(pinkPin, HIGH);
+			break;
+		default:
+			digitalWrite(pinkPin, LOW);
+			break;
+	}
+	switch (currentStep) {
+		case 5:
+		case 6:
+		case 7:
+			digitalWrite(bluePin, HIGH);
+			break;
+		default:
+			digitalWrite(bluePin, LOW);
+			break;
+	}
+}
+
+void MiniStepper::stopIdleHold()
+{
+	digitalWrite(orangePin, LOW);
+	digitalWrite(yellowPin, LOW);
+	digitalWrite(pinkPin, LOW);
+	digitalWrite(bluePin, LOW);
 }
 
 void MiniStepper::setSpeed(unsigned int targetRpm)
@@ -75,28 +197,5 @@ void MiniStepper::setSpeed(unsigned int targetRpm)
 		targetRpm=MINI_STEPPER_MAX_RPM;
 	}
 	rpm = targetRpm;
-	stepDelayMicros = (60000000UL/(targetRpm*4096UL)) - 8; // 2 microseconds per digital write, 4 pins to write, so delay should be 8us less than calculated
-}
-
-class MiniStepper
-{
-	public:
-		MiniStepper(unsigned int steps, byte blue, byte yellow, byte pink, byte orange); // Still including steps, and weird wire arrangement, to be compatible with Arduino Stepper library. Pay attention to the order of colors!
-		void setZero(); // Sets current position as 0 (e.g. when calibrating)
-		void step(long steps); // Make a number of steps CW (>0) or CCW (<0); This function is blocking, meaning it will run until all steps are done, without releasing control.
-		bool setSpeed(); // RPM
-		void goToDegree(); // go to specific position, shown in degrees. Needs to be calibrated with setZero(), otherwise it assumes 0 degrees is whatever position it was in when instantiated.
-		void stopIdleHold(); // Disables motor pins (writes LOW to all), so that power is not consumed.
-	private:
-		void setStep(byte stepNum);
-		void incrementStep(byte stepDirection));
-		int currentPosition; // N out of 4,096 (steps per revolution)
-		byte currentStep; // Still need this, as 0 might not be at the first step
-		byte bluePin;
-		byte yellowPin;
-		byte pinkPin;
-		byte orangePin;
-		unsigned int rpm;
-		unsigned long stepDelayMicros; // 60,000,000/rpm
-		unsigned int stepsPerRevolution;
+	stepMicros = (60000000UL/(targetRpm*4096UL));
 }

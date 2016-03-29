@@ -3,9 +3,12 @@
 #ifndef MiniStepper_h
 #define MiniStepper_h
 
+#include <Arduino.h>
+
 #define MINI_STEPPER_DEFAULT_RPM 10
 #define MINI_STEPPER_STEPS_PER_REV 4096
-#define MINI_STEPPER_MAX_RPM 1000
+// With 30 micros per setep, looks like maximum theoretical RPM is ~488.
+#define MINI_STEPPER_MAX_RPM 488
 
 class MiniStepper
 {
@@ -16,18 +19,21 @@ class MiniStepper
 		void setSpeed(unsigned int targetRpm); // RPM
 		void goToDegree(); // go to specific position, shown in degrees. Needs to be calibrated with setZero(), otherwise it assumes 0 degrees is whatever position it was in when instantiated.
 		void stopIdleHold(); // Disables motor pins (writes LOW to all), so that power is not consumed.
+		void startIdleHold(); // turns on needed outputs to hold motor in current position
 	private:
 		void setStep(byte stepNum); // Engages pins for the current step, according to the table at the top of the cpp file
-		void incrementStep(byte stepDirection);
-		void executeStep(); // Executes current step (e.g. this.currentStep)
+		void incrementStep(int stepDirection);
+		void executeNegativeStep();
+		void executePositiveStep();
 		int currentPosition; // N out of 4,096 (steps per revolution)
-		byte currentStep; // Still need this, as currentPosition of 0 might not be at step 0
+		int currentStep; // Still need this, as currentPosition of 0 might not be at step 0; and int, because byte is unsigned...
 		byte bluePin;
 		byte yellowPin;
 		byte pinkPin;
 		byte orangePin;
 		unsigned int rpm;
 		unsigned int stepsPerRevolution;
-}
+		unsigned long stepMicros;
+};
 
 #endif
