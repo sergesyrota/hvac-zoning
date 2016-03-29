@@ -35,6 +35,8 @@ MiniStepper::MiniStepper(unsigned int steps, byte blue, byte yellow, byte pink, 
 	pinMode(orangePin, OUTPUT);
 }
 
+// Signifies that current position of the motor is at 0 degrees.
+// goToDegree uses this calibration to go to a known location.
 void MiniStepper::setZero()
 {
 	currentPosition=0;
@@ -198,4 +200,22 @@ void MiniStepper::setSpeed(unsigned int targetRpm)
 	}
 	rpm = targetRpm;
 	stepMicros = (60000000UL/(targetRpm*4096UL));
+}
+
+void MiniStepper::goToDegree(int degrees)
+{
+	int targetPosition = (long)degrees * stepsPerRevolution/360; // Cast into long to avoid integer overflow problems with in the multiplication part of the formula.
+	int stepsToTake = abs(targetPosition-currentPosition);
+	int direction = 0;
+	if (targetPosition < currentPosition) {
+		direction = -1;
+	} else {
+		direction = 1;
+	}
+	// Instead of running in the same direction, may be it's faster to go in reverse
+	if (stepsToTake > stepsPerRevolution/2) {
+		stepsToTake = stepsPerRevolution-stepsToTake;
+		direction = direction * -1;
+	}
+	return step(direction*stepsToTake);
 }

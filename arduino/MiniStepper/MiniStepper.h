@@ -17,7 +17,7 @@ class MiniStepper
 		void setZero(); // Sets current position as 0 (e.g. when calibrating)
 		void step(long steps); // Make a number of steps CW (>0) or CCW (<0); This function is blocking, meaning it will run until all steps are done, without releasing control.
 		void setSpeed(unsigned int targetRpm); // RPM
-		void goToDegree(); // go to specific position, shown in degrees. Needs to be calibrated with setZero(), otherwise it assumes 0 degrees is whatever position it was in when instantiated.
+		void goToDegree(int degrees); // go to specific position, shown in degrees. Needs to be calibrated with setZero(), otherwise it assumes 0 degrees is whatever position it was in when instantiated.
 		void stopIdleHold(); // Disables motor pins (writes LOW to all), so that power is not consumed.
 		void startIdleHold(); // turns on needed outputs to hold motor in current position
 	private:
