@@ -20,7 +20,7 @@ pin_degrees_offset=0;
 /* 
  * motor-to-damper adaptor
 **/
-translate([0,0,-mount_length]) motor_to_damper_adaptor();
+translate([0, mount_diameter, -mount_length]) motor_to_damper_adaptor();
 
 module motor_to_damper_adaptor() {
     rotate([0,0,pin_degrees_offset]) button_pin();
@@ -44,7 +44,7 @@ module button_pin() {
 vent_diameter = 6*25.4; // 6"
 shaft_offset=8;
 motor_ears_distance=35;
-motot_ears_hole_diameter=3.8;
+motot_ears_hole_diameter=3.5;
 motor_ears_screw_length=15;
 vent_mount_distance=55;
 vent_mount_hole_diameter=6;
@@ -55,15 +55,47 @@ motor_screw_cube_side=motot_ears_hole_diameter+wall_thickness*2;
 /*
  * mount bracket itself
 **/
-//motor_to_vent_mount();
+rotate([90,0,0]) motor_to_vent_mount();
 
 // endstop sensor
 endstop_screw_diameter=1.8;
 endstop_screw1_distance=16;
-endstop_screw1_offset=-1.5;
+endstop_screw1_offset=0;
 endstop_screw2_distance=5;
-endstop_screw2_offset=20;
+endstop_screw2_offset=21.5;
 
+// Control board
+board_width=23.5;
+board_length=37.5;
+board_latch_height=3.5;
+holder_offset=3;
+
+// Not a good idea after all
+//translate([motor_ears_distance/2+motor_screw_cube_side/2,shaft_offset+motor_screw_cube_side/2,wall_thickness]) rotate([90,90,0]) controller_mount();
+
+module controller_mount() {
+    difference(){
+        cube([board_width+wall_thickness*2, board_length+wall_thickness*2, board_latch_height+wall_thickness]);
+        translate([wall_thickness, wall_thickness, wall_thickness]) cube([board_width, board_length, board_latch_height]);
+        // Cutout for holder to be more flexible
+        translate([holder_offset,0,wall_thickness]) cube([wall_thickness,board_length+wall_thickness*2, board_latch_height]);
+        translate([holder_offset+wall_thickness*2,0,wall_thickness]) cube([wall_thickness,board_length+wall_thickness*2, board_latch_height]);
+        translate([board_width-holder_offset+wall_thickness,0,wall_thickness]) cube([wall_thickness,board_length+wall_thickness*2, board_latch_height]);
+        translate([board_width-holder_offset-wall_thickness,0,wall_thickness]) cube([wall_thickness,board_length+wall_thickness*2, board_latch_height]);
+    }
+    // board holder
+    //translate([wall_thickness+holder_offset,wall_thickness,board_latch_height+wall_thickness]) rotate([0,0,270]) board_holder();
+    //translate([board_width-holder_offset,wall_thickness,board_latch_height+wall_thickness]) rotate([0,0,270]) board_holder();
+    //translate([2*wall_thickness+holder_offset,board_length+wall_thickness,board_latch_height+wall_thickness]) rotate([0,0,90]) board_holder();
+    //translate([wall_thickness+board_width-holder_offset,board_length+wall_thickness,board_latch_height+wall_thickness]) rotate([0,0,90]) board_holder();
+}
+
+module board_holder() {
+    union() {
+        cube(wall_thickness, wall_thickness, wall_thickness);
+        translate([0,wall_thickness, wall_thickness/2])rotate([90,0,0]) cylinder(d=wall_thickness, h=wall_thickness, $fn=20);
+    }
+}
 
 
 module motor_to_vent_mount() {
@@ -100,9 +132,8 @@ module vent_mount_plate() {
     plate_total_width=vent_ears_total_width+motor_screw_cube_side/2+shaft_offset-vent_ears_total_width/2+(endstop_sensor_space) ;
     //                 ^ base width         ^ extend for motor mount                                     ^ accommodate endstop sensor
     translate([-vent_ears_total_length/2,0,0]) rotate([0,90,0]) translate([-wall_thickness*1.5,0,0]) intersection() {
-        translate([-wall_thickness*1.5, -vent_ears_total_width/2-endstop_sensor_space, 0]) cube([wall_thickness*3, plate_total_width, vent_ears_total_length]);
         difference() {
-            translate([-vent_diameter/2, 0, 0]) cylinder(vent_ears_total_length, d=vent_diameter+wall_thickness*8);
+            translate([-wall_thickness*1.5, -vent_ears_total_width/2-endstop_sensor_space, 0]) cube([wall_thickness*3, plate_total_width, vent_ears_total_length]);
             translate([-vent_diameter/2, 0, 0]) vent(vent_ears_total_length);
             // Mount holes cutout
             translate([-wall_thickness*1.5,0,vent_mount_hole_diameter/2+wall_thickness]) rotate([0,90,0]) cylinder(wall_thickness*3, vent_mount_hole_diameter/2, vent_mount_hole_diameter/2, $fn=20);
