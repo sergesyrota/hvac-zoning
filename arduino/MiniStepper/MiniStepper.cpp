@@ -219,3 +219,8 @@ void MiniStepper::goToDegree(int degrees)
 	}
 	return step(direction*stepsToTake);
 }
+
+int MiniStepper::getCurrentPosition()
+{
+	return (int)(360UL*(long)currentPosition/stepsPerRevolution); // Cast to long so that we don't have overflow of int when doing multiplication
+}
