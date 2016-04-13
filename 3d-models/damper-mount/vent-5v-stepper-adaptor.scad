@@ -20,7 +20,7 @@ pin_degrees_offset=0;
 /* 
  * motor-to-damper adaptor
 **/
-translate([0, mount_diameter, -mount_length]) motor_to_damper_adaptor();
+//translate([0, mount_diameter, -mount_length]) motor_to_damper_adaptor();
 
 module motor_to_damper_adaptor() {
     rotate([0,0,pin_degrees_offset]) button_pin();
@@ -41,6 +41,7 @@ module button_pin() {
 }
 
 // Motor mount
+vent_type="squares"; // round or square
 vent_diameter = 6*25.4; // 6"
 shaft_offset=8;
 motor_ears_distance=35;
@@ -123,7 +124,13 @@ module mount_cutout(radius, width, depth) {
 }
 
 module vent(length) {
-    cylinder(length, vent_diameter/2, vent_diameter/2, $fn=100);
+    if (vent_type=="round") {
+        cylinder(length, vent_diameter/2, vent_diameter/2, $fn=100);
+    } else if (vent_type=="square") {
+    } else {
+        // How do you make it visible?
+        echo("Unknown vent type");
+    }
 }
 
 module vent_mount_plate() {
@@ -139,11 +146,19 @@ module vent_mount_plate() {
             translate([-wall_thickness*1.5,0,vent_mount_hole_diameter/2+wall_thickness]) rotate([0,90,0]) cylinder(wall_thickness*3, vent_mount_hole_diameter/2, vent_mount_hole_diameter/2, $fn=20);
             translate([-wall_thickness*1.5,0,vent_ears_total_length-vent_mount_hole_diameter/2-wall_thickness]) rotate([0,90,0]) cylinder(wall_thickness*3, vent_mount_hole_diameter/2, vent_mount_hole_diameter/2, $fn=20);
             // shaft cutout
-            translate([-wall_thickness*1.5,0,vent_ears_total_length/2]) rotate([0,90,0]) cylinder(wall_thickness*4, mount_diameter/2+wall_thickness, mount_diameter/2+wall_thickness);
+            #translate([-wall_thickness*1.8,0,vent_ears_total_length/2]) rotate([0,90,0]) shaft_cutout();
             // endstop sensor mount
             #translate([-5,-endstop_screw1_distance-mount_diameter/2,vent_ears_total_length/2+endstop_screw1_offset]) rotate([0,90,0]) cylinder(10, d=endstop_screw_diameter, $fn=20);
             #translate([-5,-endstop_screw2_distance-mount_diameter/2,vent_ears_total_length/2+endstop_screw2_offset]) rotate([0,90,0]) cylinder(10, d=endstop_screw_diameter, $fn=20);
         }
+    }
+}
+
+module shaft_cutout() {
+    hull() {
+        cylinder(wall_thickness*4, mount_diameter/2+wall_thickness, mount_diameter/2+wall_thickness);
+        // To make it easier to 3d print (less drastic overhang)
+        translate([0,-mount_diameter-wall_thickness,0]) cylinder(d=1, h=wall_thickness*4);
     }
 }
 
