@@ -1,9 +1,9 @@
 #include <SFE_BMP180.h>
 #include <Wire.h>
 #include <SyrotaAutomation1.h>
-#include "config.h"
 #include <EEPROMex.h>
 #include <MiniStepper.h>
+#include "config.h"
 
 MiniStepper motor = MiniStepper(4096, MOTOR_PINS);
 SyrotaAutomation net = SyrotaAutomation(RS485_CONTROL_PIN);
