@@ -5523,6 +5523,9 @@ Source: www.tycoelectronics.com .. ENG_DS_1654001_1099_RJ_L_0507.pdf</descriptio
 <part name="GND7" library="supply1" deviceset="GND" device=""/>
 <part name="P+1" library="supply1" deviceset="+12V" device=""/>
 <part name="P+5" library="supply1" deviceset="+5V" device=""/>
+<part name="BMP180" library="con-amp-quick" deviceset="M04" device=""/>
+<part name="GND6" library="supply1" deviceset="GND" device=""/>
+<part name="+3V9" library="supply1" deviceset="+3V3" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -5560,6 +5563,9 @@ Source: www.tycoelectronics.com .. ENG_DS_1654001_1099_RJ_L_0507.pdf</descriptio
 <instance part="GND7" gate="1" x="259.08" y="78.74"/>
 <instance part="P+1" gate="1" x="264.16" y="99.06" rot="R270"/>
 <instance part="P+5" gate="1" x="228.6" y="99.06" rot="R90"/>
+<instance part="BMP180" gate="G$1" x="195.58" y="38.1" rot="R180"/>
+<instance part="GND6" gate="1" x="177.8" y="22.86"/>
+<instance part="+3V9" gate="G$1" x="185.42" y="48.26"/>
 </instances>
 <busses>
 </busses>
@@ -5623,6 +5629,12 @@ Source: www.tycoelectronics.com .. ENG_DS_1654001_1099_RJ_L_0507.pdf</descriptio
 <pinref part="GND7" gate="1" pin="GND"/>
 <wire x1="256.54" y1="88.9" x2="259.08" y2="88.9" width="0.1524" layer="91"/>
 <wire x1="259.08" y1="88.9" x2="259.08" y2="81.28" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="BMP180" gate="G$1" pin="2"/>
+<pinref part="GND6" gate="1" pin="GND"/>
+<wire x1="190.5" y1="38.1" x2="177.8" y2="38.1" width="0.1524" layer="91"/>
+<wire x1="177.8" y1="38.1" x2="177.8" y2="25.4" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="+12V" class="0">
@@ -5955,6 +5967,36 @@ Source: www.tycoelectronics.com .. ENG_DS_1654001_1099_RJ_L_0507.pdf</descriptio
 <pinref part="R1" gate="G$1" pin="2"/>
 <pinref part="+3V7" gate="G$1" pin="+3V3"/>
 <wire x1="200.66" y1="147.32" x2="200.66" y2="149.86" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="BMP180" gate="G$1" pin="1"/>
+<wire x1="190.5" y1="40.64" x2="185.42" y2="40.64" width="0.1524" layer="91"/>
+<wire x1="185.42" y1="40.64" x2="185.42" y2="45.72" width="0.1524" layer="91"/>
+<pinref part="+3V9" gate="G$1" pin="+3V3"/>
+</segment>
+</net>
+<net name="2Y3" class="0">
+<segment>
+<pinref part="BMP180" gate="G$1" pin="3"/>
+<wire x1="190.5" y1="35.56" x2="185.42" y2="35.56" width="0.1524" layer="91"/>
+<label x="182.88" y="35.56" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="U$2" gate="G$1" pin="2Y3"/>
+<wire x1="146.05" y1="16.51" x2="148.59" y2="16.51" width="0.1524" layer="91"/>
+<label x="148.59" y="16.51" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="1Y3" class="0">
+<segment>
+<pinref part="BMP180" gate="G$1" pin="4"/>
+<wire x1="190.5" y1="33.02" x2="185.42" y2="33.02" width="0.1524" layer="91"/>
+<label x="182.88" y="33.02" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="U$2" gate="G$1" pin="1Y3"/>
+<wire x1="146.05" y1="34.29" x2="148.844" y2="34.29" width="0.1524" layer="91"/>
+<label x="148.844" y="34.29" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
