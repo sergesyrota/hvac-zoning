@@ -10,6 +10,9 @@ define('DEBUG', false);
 
 require_once '/var/www/home/dashboard/include/rs485.php';
 
+$middleClosed = 0;
+$middleOpen = 20;
+
 $target = getTargetTemperature();
 if (!empty($argv[1]) && $argv[1]=='getTarget') {
     echo $target;
@@ -26,13 +29,19 @@ if (abs($current->t-$target) < 0.3) {
 }
 // Need to close the vent, as we've reached the temperature
 if ($current->t > $target) {
-    debug("Closing the vent");
+    debug("Closing master vent");
     tryCmd('MasterVent1', 'setDegrees:0');
+    debug("Opening middle vents");
+    tryCmd('MiddleVent1', 'setDegrees:'.$middleOpen);
+    tryCmd('MiddleVent2', 'setDegrees:'.$middleOpen);
 }
 // Need to open the vent, as we're below the target
 if ($current->t < $target) {
     debug("Opening the vent");
     tryCmd('MasterVent1', 'setDegrees:90');
+    debug("Closing middle vents");
+    tryCmd('MiddleVent1', 'setDegrees:'.$middleClosed);
+    tryCmd('MiddleVent2', 'setDegrees:'.$middleClosed);
 }
 
 function debug($msg)
@@ -57,7 +66,7 @@ function getTargetTemperature()
             if ($hour<5 || $hour>=22) {
                 return 21;
             } elseif($hour<8 || $hour>=16) {
-                return 22.5;
+                return 23.5;
             } else {
                 return 18;
             }
