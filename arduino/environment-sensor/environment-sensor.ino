@@ -55,7 +55,7 @@ void loop(void)
   // Process RS-485 commands
   if (net.messageReceived()) {
     if (net.assertCommandStarts("getDht", buf)) {
-      sprintf(buf, "{'t':%d, 'tUnit':'C*100', 'rh':%d, 'secAgo':%d}", 
+      sprintf(buf, "{\"t\":%d,\"unit\":\"C*100\",\"rh\":%d,\"age\":%d}", 
         (int)(dhtData.temperature*100), 
         (int)dhtData.humidity, 
         (millis() - dhtData.lastSuccessTime)/1000);
