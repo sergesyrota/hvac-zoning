@@ -11,15 +11,25 @@ define('DEBUG', false);
 require_once '/var/www/home/dashboard/include/rs485.php';
 
 $middleClosed = 0;
-$middleOpen = 20;
+$middleOpen = 50;
 
-$target = getTargetTemperature();
+// AC or Heat
+$mode = null;
+// Get thermostat mode
+$thermostat = json_decode(`curl http://192.168.8.90/tstat/ 2>/dev/null`);
+if ($thermostat->tmode == 2) {
+    $mode = 'cool';
+} else {
+    $mode = 'heat';
+}
+
+$target = getTargetTemperature($mode);
 if (!empty($argv[1]) && $argv[1]=='getTarget') {
     echo $target;
     exit(0);
 }
 
-$current = json_decode(str_replace("'", '"', tryCmd('EnvMaster', 'getDht', 1)));
+$current = json_decode(tryCmd('EnvMaster', 'getDht', 1));
 $current->t = $current->t/100;
 debug(sprintf("Current temp is %.1f, target %.1f", $current->t, $target));
 // If we're within +/- 0.3 degrees of target - do nothing
@@ -28,7 +38,9 @@ if (abs($current->t-$target) < 0.3) {
     exit(0);
 }
 // Need to close the vent, as we've reached the temperature
-if ($current->t > $target) {
+// In heat mode, it needs to be over target, in cool mode, it needs to be under target
+if (($mode == 'heat' && $current->t > $target)
+    || ($mode == 'cool' && $current->t < $target)) {
     debug("Closing master vent");
     tryCmd('MasterVent1', 'setDegrees:0');
     debug("Opening middle vents");
@@ -36,8 +48,9 @@ if ($current->t > $target) {
     tryCmd('MiddleVent2', 'setDegrees:'.$middleOpen);
 }
 // Need to open the vent, as we're below the target
-if ($current->t < $target) {
-    debug("Opening the vent");
+if (($mode == 'heat' && $current->t < $target)
+    || ($mode == 'cool' && $current->t > $target)) {
+    debug("Opening master vent");
     tryCmd('MasterVent1', 'setDegrees:90');
     debug("Closing middle vents");
     tryCmd('MiddleVent1', 'setDegrees:'.$middleClosed);
@@ -52,7 +65,16 @@ function debug($msg)
 }
 
 // This is hardcoded schedule; Target temp in C
-function getTargetTemperature()
+function getTargetTemperature($mode)
+{
+    if ($mode == 'cool') {
+        return getTargetCoolTemperature();
+    } else {
+        return getTargetHeatTemperature();
+    }
+}
+
+function getTargetHeatTemperature()
 {
     $hour = (int)date('H');
     switch (date('N')) {
@@ -78,6 +100,38 @@ function getTargetTemperature()
                 return 21;
             } else {
                 return 22.5;
+            }
+            break;
+    }
+}
+
+// This is hardcoded schedule; Target temp in C
+function getTargetCoolTemperature()
+{
+    $hour = (int)date('H');
+    switch (date('N')) {
+        case 1: // Mon
+        case 2: // Tue
+        case 3: // Wed
+        case 4: // Thu
+        case 5: // Fri
+            // Same schedule for all weekdays
+            // 22-5: 23, 5-8: 24.5, 8-16: 28, 16-22: 24.5
+            if ($hour<5 || $hour>=22) {
+                return 23;
+            } elseif($hour<8 || $hour>=16) {
+                return 24.5;
+            } else {
+                return 28;
+            }
+            break;
+        case 6: // Sat
+        case 7: // Sun
+            // Same schedule for both days of weekend
+            if ($hour<7 || $hour>=22) {
+                return 23;
+            } else {
+                return 24.5;
             }
             break;
     }
