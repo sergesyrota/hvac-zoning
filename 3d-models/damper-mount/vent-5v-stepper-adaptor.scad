@@ -37,11 +37,11 @@ module motor_to_damper_adaptor() {
 
 module button_pin() {
     translate([mount_diameter/2,0,mount_length-marker_distance]) scale([2*marker_size/marker_height, 0.6, 1]) sphere(d=marker_height, $fn=50);
-    translate([-mount_diameter/2,0,mount_length-marker_distance]) scale([2*marker_size/marker_height, 0.6, 1]) sphere(d=marker_height, $fn=50);
+    //translate([-mount_diameter/2,0,mount_length-marker_distance]) scale([2*marker_size/marker_height, 0.6, 1]) sphere(d=marker_height, $fn=50);
 }
 
 // Motor mount
-vent_type="squares"; // round or square
+vent_type="square"; // round or square
 vent_diameter = 6*25.4; // 6"
 shaft_offset=8;
 motor_ears_distance=35;
@@ -56,14 +56,14 @@ motor_screw_cube_side=motot_ears_hole_diameter+wall_thickness*2;
 /*
  * mount bracket itself
 **/
-rotate([90,0,0]) motor_to_vent_mount();
+rotate([90,180,0]) motor_to_vent_mount();
 
 // endstop sensor
 endstop_screw_diameter=1.8;
-endstop_screw1_distance=16;
-endstop_screw1_offset=0;
-endstop_screw2_distance=5;
-endstop_screw2_offset=21.5;
+endstop_screw1_distance=17;
+endstop_screw1_offset=-1;
+endstop_screw2_distance=6;
+endstop_screw2_offset=20.5;
 
 // Control board
 board_width=23.5;
@@ -136,11 +136,22 @@ module vent(length) {
 module vent_mount_plate() {
     endstop_sensor_space=max(endstop_screw1_distance,endstop_screw2_distance)+endstop_screw_diameter/2+wall_thickness-(vent_ears_total_width/2-mount_diameter/2);
     //                   ^ distance to furthest hole                          ^ mounting holes w/ walls                ^ distance from original edge to shaft
-    plate_total_width=vent_ears_total_width+motor_screw_cube_side/2+shaft_offset-vent_ears_total_width/2+(endstop_sensor_space) ;
+    plate_total_width=vent_ears_total_width+motor_screw_cube_side/2+shaft_offset-vent_ears_total_width/2+mount_diameter/2;
     //                 ^ base width         ^ extend for motor mount                                     ^ accommodate endstop sensor
     translate([-vent_ears_total_length/2,0,0]) rotate([0,90,0]) translate([-wall_thickness*1.5,0,0]) intersection() {
         difference() {
-            translate([-wall_thickness*1.5, -vent_ears_total_width/2-endstop_sensor_space, 0]) cube([wall_thickness*3, plate_total_width, vent_ears_total_length]);
+            union() {
+                // General mount plate, then posts for endstop
+                translate([-wall_thickness*1.5, -vent_ears_total_width/2-mount_diameter/2, 0]) cube([wall_thickness*3, plate_total_width, vent_ears_total_length]);
+                // distance calculation for endstops
+                height1 = endstop_screw1_distance;
+                width=endstop_screw_diameter+wall_thickness;
+                translate([-wall_thickness*1.5,-mount_diameter/2-height1-endstop_screw_diameter*1.5,endstop_screw1_offset+vent_ears_total_length/2-width/2]) 
+                    cube([wall_thickness*3,height1,width]);
+                height2 = endstop_screw2_distance;
+                translate([-wall_thickness*1.5,-mount_diameter/2-height2-endstop_screw_diameter*1.5,endstop_screw2_offset+vent_ears_total_length/2-width/2]) 
+                    cube([wall_thickness*3,height2,width]);
+            }
             translate([-vent_diameter/2, 0, 0]) vent(vent_ears_total_length);
             // Mount holes cutout
             translate([-wall_thickness*1.5,0,vent_mount_hole_diameter/2+wall_thickness]) rotate([0,90,0]) cylinder(wall_thickness*3, vent_mount_hole_diameter/2, vent_mount_hole_diameter/2, $fn=20);
