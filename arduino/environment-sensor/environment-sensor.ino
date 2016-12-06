@@ -17,6 +17,7 @@ struct configuration_t conf = {
   CONFIG_VERSION,
   // Default values for config
   9600UL, //unsigned long baudRate; // Serial/RS-485 rate: 9600, 14400, 19200, 28800, 38400, 57600, or 115200
+  0.0     //float tempCorrection; // Temperature correction in Centigrade to calibrate sensor properly
 };
 
 void setup(void)
@@ -80,7 +81,8 @@ void updateDht()
   dhtData.lastAttemptTime = millis();
   if (dht.getStatus() == dht.ERROR_NONE) {
     dhtData.lastSuccessTime = millis();
-    dhtData.temperature = dht.getTemperature();
+    // Temperature needs to be adjusted to the calibrated value
+    dhtData.temperature = dht.getTemperature() + conf.tempCorrection;
     dhtData.humidity = dht.getHumidity();
   }
 }
@@ -104,6 +106,15 @@ void processSetCommands()
       net.sendResponse("OK");
       Serial.end();
       Serial.begin(tmp);
+    } else {
+      net.sendResponse("ERROR");
+    }
+  } else if (net.assertCommandStarts("setTempCorrection:", buf)) {
+    float tmp = strtof(buf, NULL);
+    if (tmp > -10.0 && tmp < 10.0) {
+      conf.tempCorrection = tmp;
+      saveConfig();
+      net.sendResponse("OK");
     } else {
       net.sendResponse("ERROR");
     }
