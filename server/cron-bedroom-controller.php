@@ -64,6 +64,10 @@ function debug($msg)
     }
 }
 
+function ftoc($f) {
+	return ($f - 32) / 1.8;
+}
+
 // This is hardcoded schedule; Target temp in C
 function getTargetTemperature($mode)
 {
@@ -77,6 +81,10 @@ function getTargetTemperature($mode)
 function getTargetHeatTemperature()
 {
     $hour = (int)date('H');
+    // Day off
+    if ('2017-01-02' == date('Y-m-d')) {
+        return ftoc(72);
+    }
     switch (date('N')) {
         case 1: // Mon
         case 2: // Tue
@@ -84,22 +92,22 @@ function getTargetHeatTemperature()
         case 4: // Thu
         case 5: // Fri
             // Same schedule for all weekdays
-            // 22-5: 21, 5-8: 22.5, 8-16: 18, 16-22: 22.5
+            // 22-5: 21, 5-8: 22, 8-16: 20, 16-22: 22
             if ($hour<5 || $hour>=22) {
-                return 21;
+                return ftoc(68);
             } elseif($hour<8 || $hour>=16) {
-                return 23.5;
+                return ftoc(72);
             } else {
-                return 18;
+                return ftoc(68);
             }
             break;
         case 6: // Sat
         case 7: // Sun
             // Same schedule for both days of weekend
             if ($hour<7 || $hour>=22) {
-                return 21;
+                return ftoc(68);
             } else {
-                return 22.5;
+                return ftoc(72);
             }
             break;
     }
