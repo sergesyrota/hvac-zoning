@@ -7,11 +7,22 @@
  */
 
 define('DEBUG', false);
+define('ACTION', true);
 
 require_once '/var/www/home/dashboard/include/rs485.php';
 
-$middleClosed = 0;
-$middleOpen = 50;
+// Degrees from most open to most closed.
+$degrees = [
+    'open' => 90,
+    'cracked' => 30,
+    'closed' => 0
+];
+
+$roomVents = [
+    'master' => ['MasterVent1'],
+    'middle' => ['MiddleVent1', 'MiddleVent2'],
+    'guest' => ['GuestVent'],
+];
 
 // AC or Heat
 $mode = null;
@@ -28,33 +39,59 @@ if (!empty($argv[1]) && $argv[1]=='getTarget') {
     echo $target;
     exit(0);
 }
+$targetGuest = getTargetGuestTemperature($mode);
+if (!empty($argv[1]) && $argv[1]=='getTargetGuest') {
+    echo $targetGuest;
+    exit(0);
+}
 
+// Guest
+$currentGuest = json_decode(file_get_contents('http://guest-thermostat.iot.syrota.com:5000/'));
+debug('Guest thermostat data: ' . var_export($currentGuest, true));
+// Master
 $current = json_decode(tryCmd('EnvMaster', 'getDht', 1));
 $current->t = $current->t/100;
-debug(sprintf("Current temp is %.1f, target %.1f", $current->t, $target));
+debug(sprintf("Current Master temp is %.1f, target %.1f", $current->t, $target));
+debug(sprintf("Current Guest temp is %.1f, target %.1f", $currentGuest->temperature, $targetGuest));
 // If we're within +/- 0.3 degrees of target - do nothing
-if (abs($current->t-$target) < 0.3) {
+if (abs($current->t-$target) < 0.3 && abs($currentGuest->temperature-$targetGuest) < 0.3) {
     debug("Doing nothing");
     exit(0);
 }
-// Need to close the vent, as we've reached the temperature
-// In heat mode, it needs to be over target, in cool mode, it needs to be under target
-if (($mode == 'heat' && $current->t > $target)
-    || ($mode == 'cool' && $current->t < $target)) {
-    debug("Closing master vent");
-    tryCmd('MasterVent1', 'setDegrees:0');
-    debug("Opening middle vents");
-    tryCmd('MiddleVent1', 'setDegrees:'.$middleOpen);
-    tryCmd('MiddleVent2', 'setDegrees:'.$middleOpen);
+$targetVentState = [
+    'master' => 'open',
+    'middle' => 'open',
+    'guest' => 'open'
+];
+if (($mode == 'heat' && $current->t > $target) || ($mode == 'cool' && $current->t < $target)) {
+    $targetVentState['master'] = 'closed';
+} 
+if (($mode == 'heat' && $currentGuest->temperature > $targetGuest) || ($mode == 'cool' && $currentGuest->temperature < $targetGuest)) {
+    $targetVentState['guest'] = 'closed';
 }
-// Need to open the vent, as we're below the target
-if (($mode == 'heat' && $current->t < $target)
-    || ($mode == 'cool' && $current->t > $target)) {
-    debug("Opening master vent");
-    tryCmd('MasterVent1', 'setDegrees:90');
-    debug("Closing middle vents");
-    tryCmd('MiddleVent1', 'setDegrees:'.$middleClosed);
-    tryCmd('MiddleVent2', 'setDegrees:'.$middleClosed);
+if ($targetVentState['master'] == 'open' || $targetVentState['guest'] == 'open') {
+    $targetVentState['middle'] = 'closed';
+}
+if ($targetVentState['master'] == 'closed' && $targetVentState['guest'] == 'closed') {
+    $targetVentState['middle'] = 'open';
+    $targetVentState['master'] = 'cracked';
+    $targetVentState['guest'] = 'cracked';
+}
+debug('Target vent state: ' . var_export($targetVentState, true));
+
+    // go from most-open to most closed
+foreach ($degrees as $positionName=>$deg) {
+    foreach ($roomVents as $roomName=>$vents) {
+        if ($targetVentState[$roomName] == $positionName) {
+            foreach ($vents as $vent) {
+                debug("Setting $roomName $vent at $deg");
+                if (ACTION) {
+                    tryCmd($vent, 'setDegrees:' . $deg);
+                }
+                sleep(3);
+            }
+        }
+    }
 }
 
 function debug($msg)
@@ -66,6 +103,14 @@ function debug($msg)
 
 function ftoc($f) {
 	return ($f - 32) / 1.8;
+}
+
+function getTargetGuestTemperature($mode) {
+    if ($mode == 'cool') {
+        return ftoc(73);
+    } else {
+        return ftoc(71);
+    }
 }
 
 // This is hardcoded schedule; Target temp in C
@@ -82,8 +127,10 @@ function getTargetHeatTemperature()
 {
     $hour = (int)date('H');
     // Day off
-    if ('2017-01-02' == date('Y-m-d')) {
-        return ftoc(72);
+    if (time() < strtotime('2017-04-08 00:00:00')) {
+        return ftoc(62);
+    } elseif (time() < strtotime('2017-04-08 15:00:00')) {
+        return ftoc(76);
     }
     switch (date('N')) {
         case 1: // Mon
