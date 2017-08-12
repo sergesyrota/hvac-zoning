@@ -86,9 +86,7 @@ foreach ($degrees as $positionName=>$deg) {
         if ($targetVentState[$roomName] == $positionName) {
             foreach ($vents as $vent) {
                 debug("Setting $roomName $vent at $deg");
-                if (ACTION && $vent != 'GuestVent') {
-                    tryCmd($vent, 'setDegrees:' . $deg);
-                }
+                tryCmd($vent, 'setDegrees:' . $deg);
                 sleep(3);
             }
         }
