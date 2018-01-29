@@ -1,0 +1,18 @@
+[
+    {
+        "day": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+        "temp": [
+            {"time": "05:00", "heat": 72, "cool": 74},
+            {"time": "07:30", "heat": 66, "cool": 80},
+            {"time": "16:30", "heat": 72, "cool": 74},
+            {"time": "22:00", "heat": 70, "cool": 72}
+        ]
+    },
+    {
+        "day": ["Sat", "Sun"],
+        "temp": [
+            {"time": "06:30", "heat": 72, "cool": 74},
+            {"time": "22:00", "heat": 70, "cool": 72}
+        ]
+    }
+]
