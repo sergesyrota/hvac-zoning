@@ -1,0 +1,60 @@
+{
+    "1": {
+        "name": "Master Bedroom",
+        "thermostat": {
+            "type": "cli",
+            "connection": {
+                "command": "echo '{\"call\":\"heat\",\"target\":74,\"current\":73}'"
+            }
+        },
+        "vents": [
+            {
+                "type": "rs485v1",
+                "connection": {
+                    "device": "VentMaster1"
+                }
+            }
+        ]
+    },
+    "2": {
+        "name": "Middle Bedroom",
+        "master": true,
+        "thermostat": {
+            "type": "cli",
+            "connection": {
+                "command": "echo '{\"mode\":\"auto\",\"call\":\"cool\",\"target\":73,\"current\":73}'"
+            }
+        },
+        "vents": [
+            {
+                "type": "rs485v1",
+                "connection": {
+                    "device": "VentMiddle1"
+                }
+            },
+            {
+                "type": "rs485v1",
+                "connection": {
+                    "device": "VentMiddle2"
+                }
+            }
+        ]
+    },
+    "3": {
+        "name": "South Bedroom",
+        "thermostat": {
+            "type": "cli",
+            "connection": {
+                "command": "echo '{\"call\":\"cool\",\"target\":74,\"current\":73}'"
+            }
+        },
+        "vents": [
+            {
+                "type": "rs485v1",
+                "connection": {
+                    "device": "VentGuest1"
+                }
+            }
+        ]
+    }
+}
