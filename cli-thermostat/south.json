@@ -1,0 +1,9 @@
+[
+    {
+        "day": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+        "temp": [
+            {"time": "12:00", "heat": 71, "cool": 74},
+            {"time": "18:00", "heat": 66, "cool": 80}
+        ]
+    }
+]
