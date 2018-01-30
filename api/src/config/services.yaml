@@ -1,6 +1,16 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
+  tstat.master.id: 1
+  tstat.master.type: RS485
+  tstat.master.deviceName: EnvMaster
+  tstat.master.command: getDht
+  tstat.middle.id: 2
+  tstat.middle.type: RadioThermostat
+  tstat.middle.hostname: 192.168.8.90
+  tstat.guest.id: 3
+  tstat.guest.type: JSON
+  tstat.guest.uri: http://guest-thermostat.iot.syrota.com:5000/
 
 services:
     # default configuration for services in *this* file
@@ -25,3 +35,6 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    App\Service\Thermostat:
+        arguments:
+            $db: '@snc_redis.default'

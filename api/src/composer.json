@@ -14,7 +14,8 @@
         "symfony/framework-bundle": "^4.0",
         "symfony/lts": "^4@dev",
         "symfony/yaml": "^4.0",
-        "sergesyrota/syrota-automation": "dev-master"
+        "sergesyrota/syrota-automation": "dev-master",
+        "snc/redis-bundle": "2.x-dev"
     },
     "require-dev": {
         "symfony/dotenv": "^4.0"
