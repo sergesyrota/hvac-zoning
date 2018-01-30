@@ -23,6 +23,9 @@ class Cli implements iThermostat {
 
     public function getMode() {
         $data = $this->getData();
+        if (empty($data->mode)) {
+            throw new Exception("Unknown mode for CLI thermostat {$this->config->command}");
+        }
         switch ($data->mode) {
             case 'auto':
                 return iThermostat::MODE_AUTO;
@@ -43,6 +46,9 @@ class Cli implements iThermostat {
     // - null
     public function getCall() {
         $data = $this->getData();
+        if (empty($data->call)) {
+            throw new Exception("Empty call for CLI thermostat {$this->config->command}");
+        }
         switch ($data->call) {
             case 'auto':
                 return iThermostat::MODE_AUTO;
