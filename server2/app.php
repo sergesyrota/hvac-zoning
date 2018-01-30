@@ -5,6 +5,8 @@ use \Thermostat\iThermostat;
 class App {
     // List of thermostats and full configuration
     private $zoneConfig;
+    // General app configuration;
+    private $appConfig;
     // thermostat adapters using iThermostat
     private $tstatInstance;
     // Master zone id (one whose thermostat is connected to equipment)
@@ -18,7 +20,8 @@ class App {
         if (empty($config)) {
             throw new Exception('Invalid zone JSON file.');
         }
-        $this->zoneConfig = $config;
+        $this->zoneConfig = $config->zones;
+        $this->appConfig = $config->parameters;
     }
 
     public function run() {
@@ -94,12 +97,23 @@ class App {
     // Sorts all target states from most open to most closed, and executes all moves
     private function executeVentMoves($ventTarget) {
         // sorting all zones
+        $ventTarget = $this->enforceMinAirflow($ventTarget);
         arsort($ventTarget);
         foreach ($ventTarget as $id=>$percent) {
             foreach ($this->ventInstance[$id] as $vent) {
                 $vent->setOpen($percent);
             }
         }
+    }
+
+    // minAirflow enforcement
+    private function enforceMinAirflow($ventTarget) {
+        $flow = new Airflow($ventTarget);
+        foreach ($ventTarget as $id=>$percent) {
+            $flow->addZone($id, $this->zoneConfig->{$id}->airflow, ($id==$this->masterZoneId));
+        }
+        var_dump($this->appConfig);
+        return $flow->getEnforced($this->appConfig->minAirflow);
     }
 
     // Reusable function to get environment variable, and throw an exception if none found

@@ -4,7 +4,11 @@ This is a pretty basic implementation that relies on having other interfaces imp
 
 ## Configuration
 
-JSON file is used for configuration. Each zone should have a unique ID, one thermostat of supported type, and any number of supported vents (including 0).
+JSON file is used for configuration. Each zone should have a unique ID, one thermostat of supported type, and any number of supported vents (including 0). Zones should be put into "zones" object. General parameters should be put into "parameters".
+
+Supported parameters:
+
+ * minAirflow: minimum airflow units the system should have open at any given time. Arbitrary unit of measure, just has to be consistent with airflow parameter for each zone. When desired vent state leads to lower than minAirflow, we first try to open up non-master zones, then master zone to reach desired minAirflow parameter.
 
 Sample configuration for 1 zone:
 
@@ -24,7 +28,8 @@ Sample configuration for 1 zone:
                     "device": "name"
                 }
             }
-        ]
+        ],
+        "airflow": 4
     }
 
 General application configuration parameters are set in environment variables. See .env file.

@@ -1,60 +1,68 @@
 {
-    "1": {
-        "name": "Master Bedroom",
-        "thermostat": {
-            "type": "cli",
-            "connection": {
-                "command": "echo '{\"call\":\"heat\",\"target\":74,\"current\":73}'"
-            }
-        },
-        "vents": [
-            {
-                "type": "rs485v1",
-                "connection": {
-                    "device": "VentMaster1"
-                }
-            }
-        ]
+    "parameters": {
+        "minAirflow": 4
     },
-    "2": {
-        "name": "Middle Bedroom",
-        "master": true,
-        "thermostat": {
-            "type": "cli",
-            "connection": {
-                "command": "echo '{\"mode\":\"auto\",\"call\":\"cool\",\"target\":73,\"current\":73}'"
-            }
-        },
-        "vents": [
-            {
-                "type": "rs485v1",
+    "zones": {
+        "1": {
+            "name": "Master Bedroom",
+            "thermostat": {
+                "type": "cli",
                 "connection": {
-                    "device": "VentMiddle1"
+                    "command": "echo '{\"call\":\"heat\",\"target\":74,\"current\":73}'"
                 }
             },
-            {
-                "type": "rs485v1",
-                "connection": {
-                    "device": "VentMiddle2"
+            "vents": [
+                {
+                    "type": "rs485v1",
+                    "connection": {
+                        "device": "VentMaster1"
+                    }
                 }
-            }
-        ]
-    },
-    "3": {
-        "name": "South Bedroom",
-        "thermostat": {
-            "type": "cli",
-            "connection": {
-                "command": "echo '{\"call\":\"cool\",\"target\":74,\"current\":73}'"
-            }
+            ],
+            "airflow": 4
         },
-        "vents": [
-            {
-                "type": "rs485v1",
+        "2": {
+            "name": "Middle Bedroom",
+            "master": true,
+            "thermostat": {
+                "type": "cli",
                 "connection": {
-                    "device": "VentGuest1"
+                    "command": "echo '{\"mode\":\"auto\",\"call\":\"cool\",\"target\":73,\"current\":73}'"
                 }
-            }
-        ]
+            },
+            "vents": [
+                {
+                    "type": "rs485v1",
+                    "connection": {
+                        "device": "VentMiddle1"
+                    }
+                },
+                {
+                    "type": "rs485v1",
+                    "connection": {
+                        "device": "VentMiddle2"
+                    }
+                }
+            ],
+            "airflow": 2
+        },
+        "3": {
+            "name": "South Bedroom",
+            "thermostat": {
+                "type": "cli",
+                "connection": {
+                    "command": "echo '{\"call\":\"cool\",\"target\":74,\"current\":73}'"
+                }
+            },
+            "vents": [
+                {
+                    "type": "rs485v1",
+                    "connection": {
+                        "device": "VentGuest1"
+                    }
+                }
+            ],
+            "airflow": 3
+        }
     }
 }
