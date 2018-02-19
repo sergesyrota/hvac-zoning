@@ -8,7 +8,7 @@
             "thermostat": {
                 "type": "cli",
                 "connection": {
-                    "command": "echo '{\"call\":\"heat\",\"target\":74,\"current\":73}'"
+                    "command": "echo '{\"call\":\"off\",\"target\":74,\"current\":73}'"
                 }
             },
             "vents": [
@@ -25,9 +25,10 @@
             "name": "Middle Bedroom",
             "master": true,
             "thermostat": {
-                "type": "cli",
+                "type": "nest",
                 "connection": {
-                    "command": "echo '{\"mode\":\"auto\",\"call\":\"cool\",\"target\":73,\"current\":73}'"
+                    "bearer_token": "NEST_MIDDLE_TOKEN",
+                    "device_id": "NEST_MIDDLE_THERMOSTAT"
                 }
             },
             "vents": [
@@ -51,7 +52,7 @@
             "thermostat": {
                 "type": "cli",
                 "connection": {
-                    "command": "echo '{\"call\":\"cool\",\"target\":74,\"current\":73}'"
+                    "command": "echo '{\"call\":\"off\",\"target\":74,\"current\":73}'"
                 }
             },
             "vents": [

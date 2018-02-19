@@ -32,13 +32,14 @@ Sample configuration for 1 zone:
         "airflow": 4
     }
 
-General application configuration parameters are set in environment variables. See .env file.
+General application configuration parameters are set in environment variables. See .env.example file.
 
 ### Supported thermostat adapters
 
 See adapters/thermostat/factory.php
 
  * cli: run a shell command to obtain thermostat data
+ * NEST: query the API to get status information. Connection information has environment variable names, rather than sensitive data.
 
 ### Supported vent adapters
 
