@@ -103,6 +103,9 @@ class Nest implements iThermostat {
         if (!empty($data->error)) {
             throw new \Exception("NEST API error: " . $data->message);
         }
+        if ($data->is_online != 1) {
+            throw new \Exception("NEST thermostat is offline: " . $data->is_online);
+        }
         $this->updateTime = time();
         $this->response = $data;
         return $this->response;
