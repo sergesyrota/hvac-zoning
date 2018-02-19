@@ -46,6 +46,11 @@ class App {
             // Nothing more to do here
             return;
         }
+        // If master is not actively heating or cooling, leave all vents open
+        if ($master->getCall() == iThermostat::MODE_OFF) {
+            $this->executeVentMoves($ventTarget);
+            return;
+        }
 
         // Only calls matching mode would be respected
         $zonesOpen = 0; // increment each time we have zone that we don't want to close, except master
