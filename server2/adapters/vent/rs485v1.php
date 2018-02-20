@@ -5,9 +5,13 @@ namespace Vent;
 class RS485v1 implements iVent {
     // Vent connection information
     private $config;
+    // Automation protocol library
+    private $gm;
 
-    public function __construct($config) {
+    public function __construct($config, \SyrotaAutomation\Gearman $gm) {
         $this->config = $config;
+        $this->gm = $gm;
+        $this->validateConfig();
     }
 
     private function validateConfig() {
@@ -26,6 +30,10 @@ class RS485v1 implements iVent {
         // Convert percent to approximate degrees for rotating vent
         $degrees = (int)rad2deg(asin($percent/100));
         echo "Setting vent {$this->config->device} to {$degrees}deg.\n";
-        throw new \Exception("not yet implemented");
+        $res = $this->gm->command($this->config->device, sprintf('setDegrees:%d', $degrees));
+        if ($res != 'Working') {
+            throw new \Exception(sprintf("Unexpected response from vent %s: '%s'", $this->config->device, $res));
+        }
+        return true;
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/app.php";
 require_once __DIR__ . "/adapters/thermostat/interface.php";
 require_once __DIR__ . "/adapters/thermostat/factory.php";
