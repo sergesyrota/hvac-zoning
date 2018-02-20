@@ -8,7 +8,7 @@ function getCurrentTemp($unit='F') {
     if (empty($data)) {
         throw new \Exception("Can't get data for Master environment sensor.");
     }
-    if ($temp->age > 60) {
+    if ($data->age > 60) {
         throw new \Exception("Master environment sensor has outdated temperature reading.");
     }
     $temp = CtoF($data->t/100);

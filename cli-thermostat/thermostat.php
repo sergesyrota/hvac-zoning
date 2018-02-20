@@ -28,7 +28,7 @@ foreach ($schedule as $entry) {
 
 // All units are in F
 $current = getCurrentTemp();
-$response = getResponseTemplate($stateFile);
+$response = getResponseTemplate();
 $response['current'] = $current;
 $response['target']['heat'] = $temp->heat;
 $response['target']['cool'] = $temp->cool;
