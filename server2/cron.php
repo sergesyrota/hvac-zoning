@@ -1,11 +1,5 @@
 <?php
 
-/*
-if (empty($argv[1]) || !file_exists($argv[1])) {
-    echo "USAGE: cron.php <thermostats.json>\n";
-    die();
-}*/
-
 require_once __DIR__ . '/bootstrap.php';
 
 // CRON setup and re-run protection

@@ -79,11 +79,37 @@ class Nest implements iThermostat {
     }
 
     // Gets currrent data, if older than TTL
-    private function getData($ttl=60) {
+    private function getData($ttl=45) {
+        // Use cache file if we have a prefix
+        if (!empty(getenv('NEST_CACHE_FILE_PREFIX'))) {
+            $cacheFile = getenv('NEST_CACHE_FILE_PREFIX') . md5($this->bearerToken);
+            if (!file_exists($cacheFile)
+                || (time() - filemtime($cacheFile)) > $ttl
+                || empty(json_decode(file_get_contents($cacheFile))))
+            {
+                $allData = $this->getDatafromApi();
+                file_put_contents($cacheFile, json_encode($allData));
+                // Need to make sure next time we query mtime, it's not retreived form cache
+                clearstatcache();
+                return $allData->{$this->thermostatId};
+            } else {
+                $allData = json_decode(file_get_contents($cacheFile));
+                return $allData->{$this->thermostatId};
+            }
+        }
+        // If cache file is not specified, just cache data in class variable
         if (time() - $this->updateTime <= $ttl) {
             return $this->response;
         }
-        $url = 'https://developer-api.nest.com/devices/thermostats/' . $this->thermostatId;
+        $allData = $this->getDatafromApi();
+        $this->updateTime = time();
+        $this->response = $allData->{$this->thermostatId};
+        return $this->response;
+    }
+
+    // Gets all available thermostats' data from API
+    private function getDatafromApi() {
+        $url = 'https://developer-api.nest.com/devices/thermostats/';
         $headers = [
             'Authorization: Bearer c.' . $this->bearerToken,
             'Content-type: application/json',
@@ -103,11 +129,6 @@ class Nest implements iThermostat {
         if (!empty($data->error)) {
             throw new \Exception("NEST API error: " . $data->message);
         }
-        if ($data->is_online != 1) {
-            throw new \Exception("NEST thermostat is offline: " . $data->is_online);
-        }
-        $this->updateTime = time();
-        $this->response = $data;
-        return $this->response;
+        return $data;
     }
 }
