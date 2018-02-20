@@ -104,7 +104,6 @@ class App {
         // sorting all zones
         $ventTarget = $this->enforceMinAirflow($ventTarget);
         arsort($ventTarget);
-        print_r($ventTarget);
         foreach ($ventTarget as $id=>$percent) {
             foreach ($this->ventInstance[$id] as $vent) {
                 $vent->setOpen($percent);
@@ -119,7 +118,6 @@ class App {
         foreach ($ventTarget as $id=>$percent) {
             $flow->addZone($id, $this->zoneConfig->{$id}->airflow, ($id==$this->masterZoneId));
         }
-        var_dump($this->appConfig);
         return $flow->getEnforced($this->appConfig->minAirflow);
     }
 
