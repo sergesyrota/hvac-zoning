@@ -2,7 +2,6 @@
 
 function getCurrentTemp($unit='F') {
     $data = json_decode(file_get_contents('http://guest-thermostat.iot.syrota.com:5000/'));
-    print_r($data);
     if ($unit == $data->temperature_unit) {
         return $data->temperature;
     }
