@@ -3,7 +3,7 @@
 // Response needs to have "mode" and "call" output as json
 
 date_default_timezone_set(getenv('TIMEZONE'));
-$tolerance = (float)getenv(TEMP_TOLERANCE); // Within these degrees, we're doing nothing
+$tolerance = (float)getenv('TEMP_TOLERANCE'); // Within these degrees, we're doing nothing
 
 // include function to get current temperature getCurrentTemp
 require_once(__DIR__ . getenv('GET_CURRENT_TEMP_FUNC_FILE'));
