@@ -1,9 +1,14 @@
 <?php
 
 function getCurrentTemp($unit='F') {
-    $temp = 79;
-    if ($unit == 'C') {
-        return FtoC($temp);
+    $data = json_decode(file_get_contents('http://guest-thermostat.iot.syrota.com:5000/'));
+    print_r($data);
+    if ($unit == $data->temperature_unit) {
+        return $data->temperature;
     }
-    return $temp;
+    if ($unit == 'F') {
+        return CtoF($data->temperature);
+    } else {
+        return FtoC($data->temperature);
+    }
 }

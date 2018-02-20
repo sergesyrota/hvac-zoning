@@ -83,6 +83,12 @@ function getResponseTemplate() {
     ];
 }
 
+// Convert Fahrenheit to Celsius
 function FtoC($t) {
     return ($t - 32) / 1.8;
+}
+
+// Convert Celsius to Fahrenheit
+function CtoF($t) {
+    return 32 + ($t * 1.8);
 }
