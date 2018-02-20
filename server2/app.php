@@ -100,13 +100,15 @@ class App {
     }
 
     // Sorts all target states from most open to most closed, and executes all moves
-    private function executeVentMoves($ventTarget) {
+    private function executeVentMoves($ventTarget, $delay=2) {
         // sorting all zones
         $ventTarget = $this->enforceMinAirflow($ventTarget);
         arsort($ventTarget);
+        print_r($ventTarget);
         foreach ($ventTarget as $id=>$percent) {
             foreach ($this->ventInstance[$id] as $vent) {
                 $vent->setOpen($percent);
+                sleep($delay);
             }
         }
     }
