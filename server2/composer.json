@@ -6,6 +6,7 @@
         }
   ],
   "require": {
-    "sergesyrota/syrota-automation": "dev-master"
+    "sergesyrota/syrota-automation": "dev-master",
+    "monolog/monolog": "^1.23"
   }
 }

@@ -18,7 +18,14 @@ function removePidFile() {
 register_shutdown_function('removePidFile');
 // END CRON setup
 
-$app = new App(App::getRequiredEnv('TSTATS_JSON'));
+$logger = new \Monolog\Logger('server.2');
+$logger->pushHandler(
+    new \Monolog\Handler\StreamHandler(App::getRequiredEnv('LOG_FILE'),
+    App::getRequiredEnv('LOG_LEVEL'))
+);
+\Monolog\ErrorHandler::register($logger);
+
+$app = new App(App::getRequiredEnv('TSTATS_JSON'), $logger);
 $app->run();
 
 function isProcessRunning($pidFile) {

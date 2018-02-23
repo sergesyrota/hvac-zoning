@@ -1,6 +1,7 @@
 <?php
 
 use \Thermostat\iThermostat;
+use Monolog\Logger;
 
 class App {
     // List of thermostats and full configuration
@@ -13,9 +14,12 @@ class App {
     private $masterZoneId;
     // All vents by thermostat ID
     private $ventInstance;
+    // Logger instance
+    private $log;
 
     // Tstats file should have a json definition for all room tstats and their vents
-    public function __construct($configFile) {
+    public function __construct($configFile, Logger $log) {
+        $this->log = $log;
         $config = json_decode(file_get_contents($configFile));
         if (empty($config)) {
             throw new Exception('Invalid zone JSON file.');
@@ -42,12 +46,14 @@ class App {
         if ($masterMode == iThermostat::MODE_OFF) {
             // We need to close master thermostat vent, and open all others
             $ventTarget[$this->masterZoneId] = 0;
+            $this->log->addDebug("Thermostat in auto mode, closing master, and leaving others open.");
             $this->executeVentMoves($ventTarget);
             // Nothing more to do here
             return;
         }
         // If master is not actively heating or cooling, leave all vents open
         if ($master->getCall() == iThermostat::MODE_OFF) {
+            $this->log->addDebug("Not actively doing anything. Leaving vents open.");
             $this->executeVentMoves($ventTarget);
             return;
         }
@@ -68,6 +74,7 @@ class App {
                 $zonesOpen++;
             }
         }
+        $this->log->addDebug("Number of zones to open: " . $zonesOpen);
         // Close master zone if some others are open
         if ($zonesOpen > 0) {
             $ventTarget[$this->masterZoneId] = 0;
@@ -104,6 +111,7 @@ class App {
         // sorting all zones
         $ventTarget = $this->enforceMinAirflow($ventTarget);
         arsort($ventTarget);
+        $this->log->addDebug("Vent targets: ", $ventTarget);
         foreach ($ventTarget as $id=>$percent) {
             foreach ($this->ventInstance[$id] as $vent) {
                 $vent->setOpen($percent);
@@ -131,21 +139,3 @@ class App {
         return $data;
     }
 }
-
-
-
-/*
-master state = null
-foreach thermostats
-    get current call
-    if master
-        master state = current thermostat mode
-
-if any with call = master state
-    open those vents
-    close master vent
-
-foreach with call = null
-    close vents
-
-*/
