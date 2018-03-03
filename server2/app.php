@@ -20,7 +20,7 @@ class App {
     // Tstats file should have a json definition for all room tstats and their vents
     public function __construct($configFile, Logger $log) {
         $this->log = $log;
-        $config = json_decode(file_get_contents($configFile));
+        $config = json_decode(file_get_contents(__DIR__ . '/' . $configFile));
         if (empty($config)) {
             throw new Exception('Invalid zone JSON file.');
         }
