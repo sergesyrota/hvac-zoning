@@ -3,36 +3,15 @@
 namespace Thermostat;
 
 class Nest implements iThermostat {
-    // Connection configuration
-    private $config;
-    // Bearer bearer
-    private $bearerToken;
-    // Thermostat ID
-    private $thermostatId;
-    // Cached response
-    private $response;
-    // Time since response was obtained
-    private $updateTime;
+    // Connector class for interfacing with API
+    private $con;
 
-    public function __construct($config) {
-        $this->config = $config;
-        $this->validateConfig();
-        $this->bearerToken = getenv($this->config->bearer_token);
-        $this->thermostatId = getenv($this->config->device_id);
-    }
-
-    private function validateConfig() {
-        // Config should be identification of environment variables for API connection info
-        if (empty($this->config->bearer_token) || empty(getenv($this->config->bearer_token))) {
-            throw new \Exception('Nest thermostat needs bearer token to be specified and present in environment.');
-        }
-        if (empty($this->config->device_id) || empty(getenv($this->config->device_id))) {
-            throw new \Exception('Nest thermostat needs device ID to be specified and present in environment.');
-        }
+    public function __construct(Connector\Nest $connector) {
+        $this->con = $connector;
     }
 
     public function getMode() {
-        $data = $this->getData();
+        $data = $this->con->getData();
         if (empty($data->hvac_mode)) {
             throw new \Exception("Unknown mode for NEST thermostat {$this->thermostatId}");
         }
@@ -56,7 +35,7 @@ class Nest implements iThermostat {
     // - cool
     // - null
     public function getCall() {
-        $data = $this->getData();
+        $data = $this->con->getData();
         if (empty($data->hvac_state)) {
             throw new \Exception("Empty call for NEST thermostat {$this->thermostatId}");
         }
@@ -73,62 +52,37 @@ class Nest implements iThermostat {
     }
 
     // Temperature difference between current and target
+    // Positive, means we've overshot. Negative, need to work toward target.
     public function deltaT($unit='F') {
-        $this->getData();
-        throw new \Exception("Not implemented");
+        $data = $this->con->getData();
+        // Need to translate to heat or cool, depending where we're at
+        switch ($data->hvac_mode) {
+            case 'heat-cool':
+                return $this->getAutoDelta($data, $data->target_temperature_low_f, $data->target_temperature_high_f);
+            case 'eco':
+                return $this->getAutoDelta($data, $data->eco_temperature_low_f, $data->eco_temperature_high_f);
+            case 'cool':
+                return $data->target_temperature_f - $data->ambient_temperature_f;
+            case 'heat':
+                return $data->ambient_temperature_f - $data->target_temperature_f;
+            case 'off':
+                return 0;
+            default:
+                throw new \Exception("Unknown thermostat mode in NEST adapter: {$data->hvac_mode}");
+        }
+        throw new \Exception("Unknown state in NEST thermostat: {$data->hvac_state}");
     }
 
-    // Gets currrent data, if older than TTL
-    private function getData($ttl=45) {
-        // Use cache file if we have a prefix
-        if (!empty(getenv('NEST_CACHE_FILE_PREFIX'))) {
-            $cacheFile = getenv('NEST_CACHE_FILE_PREFIX') . md5($this->bearerToken);
-            if (!file_exists($cacheFile)
-                || (time() - filemtime($cacheFile)) > $ttl
-                || empty(json_decode(file_get_contents($cacheFile))))
-            {
-                $allData = $this->getDatafromApi();
-                file_put_contents($cacheFile, json_encode($allData));
-                // Need to make sure next time we query mtime, it's not retreived form cache
-                clearstatcache();
-                return $allData->{$this->thermostatId};
-            } else {
-                $allData = json_decode(file_get_contents($cacheFile));
-                return $allData->{$this->thermostatId};
-            }
+    // When mode is auto, figure out which target is closer
+    private function getAutoDelta($data, $heatTarget, $coolTarget) {
+        $t = $data->ambient_temperature_f;
+        if (abs($t-$heatTarget) < abs($t-$coolTarget)) {
+            // Heat mode
+            return $heatTarget - $t;
+        } else {
+            // Cool mode
+            return $t - $coolTarget;
         }
-        // If cache file is not specified, just cache data in class variable
-        if (time() - $this->updateTime <= $ttl) {
-            return $this->response;
-        }
-        $allData = $this->getDatafromApi();
-        $this->updateTime = time();
-        $this->response = $allData->{$this->thermostatId};
-        return $this->response;
-    }
-
-    // Gets all available thermostats' data from API
-    private function getDatafromApi() {
-        $url = 'https://developer-api.nest.com/devices/thermostats/';
-        $headers = [
-            'Authorization: Bearer c.' . $this->bearerToken,
-            'Content-type: application/json',
-        ];
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        //curl_setopt($ch, CURLOPT_VERBOSE, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        $res = curl_exec($ch);
-        $data = json_decode($res);
-        if ($data === false) {
-            throw new \Exception("Error getting data from thermostat " . __CLASS__ . "; Invalid response.");
-        }
-        if (!empty($data->error)) {
-            throw new \Exception("NEST API error: " . $data->message);
-        }
-        return $data;
+        throw new Exception('Cannot figure out AutoDelta.');
     }
 }

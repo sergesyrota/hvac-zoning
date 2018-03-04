@@ -5,8 +5,16 @@
             "url": "https://github.com/sergesyrota/SyrotaAutomationPhp.git"
         }
   ],
+  "autoload": {
+      "psr-4": {
+          "Thermostat\\": "adapters/thermostat/"
+      }
+  },
   "require": {
     "sergesyrota/syrota-automation": "dev-master",
     "monolog/monolog": "^1.23"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^7"
   }
 }
