@@ -78,10 +78,10 @@ class Nest implements iThermostat {
         $t = $data->ambient_temperature_f;
         if (abs($t-$heatTarget) < abs($t-$coolTarget)) {
             // Heat mode
-            return $heatTarget - $t;
+            return $t - $heatTarget;
         } else {
             // Cool mode
-            return $t - $coolTarget;
+            return $coolTarget - $t;
         }
         throw new Exception('Cannot figure out AutoDelta.');
     }
