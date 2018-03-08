@@ -17,7 +17,7 @@ class Factory {
                     getenv($config->connection->device_id),
                     $cacheFile
                 );
-                return new Nest($connector);
+                return new Nest($connector, $config->threshold);
             default:
                 throw new \Exception("Unsupported thermostat type: " . $config->type);
         }
