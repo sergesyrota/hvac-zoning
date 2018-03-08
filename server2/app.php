@@ -105,7 +105,7 @@ class App {
             $ventTarget[$this->masterZoneId] = 0;
         }
         // Execute all moves
-        //$this->executeVentMoves($ventTarget);
+        $this->executeVentMoves($ventTarget);
         $this->saveState();
     }
 
@@ -199,13 +199,13 @@ class App {
         }
     }
 
-    // minAirflow enforcement
+    // min_airflow enforcement
     private function enforceMinAirflow($ventTarget) {
         $flow = new Airflow($ventTarget);
         foreach ($ventTarget as $id=>$percent) {
             $flow->addZone($id, $this->zoneConfig->{$id}->airflow, ($id==$this->masterZoneId));
         }
-        return $flow->getEnforced($this->appConfig->minAirflow);
+        return $flow->getEnforced($this->appConfig->min_airflow);
     }
 
     // Reusable function to get environment variable, and throw an exception if none found
