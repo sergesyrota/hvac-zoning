@@ -16,6 +16,8 @@ class App {
     private $ventInstance;
     // Logger instance
     private $log;
+    // State persistence
+    private $state;
 
     // Tstats file should have a json definition for all room tstats and their vents
     public function __construct($configFile, Logger $log) {
@@ -30,6 +32,7 @@ class App {
 
     public function run() {
         $this->initEquipment();
+        $this->initState();
         // Target vent positions, initialize all to open
         $ventTarget = [];
         foreach ($this->tstatInstance as $id=>$tstat) {
@@ -51,11 +54,11 @@ class App {
             // Nothing more to do here
             return;
         }
-        // If master is not actively heating or cooling, leave all vents open
-        if ($master->getCall() == iThermostat::MODE_OFF) {
-            $this->log->addDebug("Not actively doing anything. Leaving vents open.");
-            $this->executeVentMoves($ventTarget);
-            return;
+
+        // Check if overrides have been canceled out by some external action
+        if ($this->state->override->present && $master->getChecksum() != $this->state->master_checksum) {
+            $this->state->override->present = false;
+            $this->state->master_checksum = '';
         }
 
         // Only calls matching mode would be respected
@@ -75,17 +78,84 @@ class App {
             }
         }
         $this->log->addDebug("Number of zones to open: " . $zonesOpen);
+        // See if we want to override master zone (not supported in "auto" mode, as heat/cool difference might collide)
+        // Also need to make sure we've been uninterrupted with state file for long enough.
+        $this->log->addDebug("Time since init of state: " . (time() - $this->state->init_time));
+        if ($masterMode != iThermostat::MODE_AUTO
+            && $zonesOpen > 0
+            && $master->getCall() == iThermostat::MODE_OFF
+            && (time() - $this->state->init_time) > $this->appConfig->override_activate_time
+        ) {
+            // Override master by threshold
+            $this->log->addInfo("Setting override for master zone");
+            $master->setOverride();
+            $this->state->override->present = true;
+            $this->state->master_checksum = $master->getChecksum();
+        }
+        if ($zonesOpen == 0 && $this->state->override->present) {
+            // remove master override
+            // keep all zones open?
+            $this->log->addInfo("Removing override for master zone");
+            $master->removeOverride();
+            $this->state->override->present = false;
+            $this->state->master_checksum = $master->getChecksum();
+        }
         // Close master zone if some others are open
         if ($zonesOpen > 0) {
             $ventTarget[$this->masterZoneId] = 0;
         }
         // Execute all moves
-        $this->executeVentMoves($ventTarget);
+        //$this->executeVentMoves($ventTarget);
+        $this->saveState();
+    }
+
+    private function initState() {
+        $file = getenv('STATE_FILE');
+        $this->log->addDebug("State file path: " . $file);
+        if (!empty($file) && is_readable($file)) {
+            $state = json_decode(file_get_contents($file));
+            $this->log->addDebug("Time since state update: " . (time()-$state->last_update));
+            $this->log->addDebug("state expiration: " . ($this->appConfig->state_expiration));
+            if (empty($state) // Don't have a valid state file
+                || empty($state->last_update) // State last update is unknown
+                || (time()-$state->last_update) > $this->appConfig->state_expiration // Last state update is too old
+            ) {
+                $this->state = $this->getEmptyState();
+                return;
+            }
+            $this->state = $state;
+            return;
+        }
+        $this->log->addDebug("State file is not present");
+        $this->state = $this->getEmptyState();
+        return;
+    }
+
+    // Builds a state construct, when we don't have any, or when it's expired
+    private function getEmptyState() {
+        return (object)[
+            'last_update' => time(),
+            // Indicates how long we've had uninterrupted operation
+            'init_time' => time(),
+            'master_checksum' => '',
+            'override' => (object)[
+                'present' => false,
+            ]
+        ];
+    }
+
+    private function saveState() {
+        $file = getenv('STATE_FILE');
+        if (empty($file)) {
+            return;
+        }
+        $this->state->last_update = time();
+        file_put_contents($file, json_encode($this->state, true));
     }
 
     private function initEquipment() {
         foreach ($this->zoneConfig as $id=>$zone) {
-            $adapter = ThermostatFactory::get($zone->thermostat);
+            $adapter = \Thermostat\Factory::get($zone->thermostat);
             $this->tstatInstance[$id] = $adapter;
             if (!empty($zone->master) && $zone->master === true) {
                 if (!empty($this->masterZoneId)) {
@@ -112,11 +182,20 @@ class App {
         $ventTarget = $this->enforceMinAirflow($ventTarget);
         arsort($ventTarget);
         $this->log->addDebug("Vent targets: ", $ventTarget);
+        $lastException = null;
         foreach ($ventTarget as $id=>$percent) {
             foreach ($this->ventInstance[$id] as $vent) {
-                $vent->setOpen($percent);
-                sleep($delay);
+                try {
+                    $vent->setOpen($percent);
+                    sleep($delay);
+                } catch (\Exception $e) {
+                    // Catching all exceptions, as we need to execute all of the moves, even if some don't work.
+                    $lastException = $e;
+                }
             }
+        }
+        if (!empty($lastException)) {
+            throw $lastException;
         }
     }
 

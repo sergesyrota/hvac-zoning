@@ -8,7 +8,9 @@ JSON file is used for configuration. Each zone should have a unique ID, one ther
 
 Supported parameters:
 
- * minAirflow: minimum airflow units the system should have open at any given time. Arbitrary unit of measure, just has to be consistent with airflow parameter for each zone. When desired vent state leads to lower than minAirflow, we first try to open up non-master zones, then master zone to reach desired minAirflow parameter.
+ * min_airflow: minimum airflow units the system should have open at any given time. Arbitrary unit of measure, just has to be consistent with airflow parameter for each zone. When desired vent state leads to lower than minAirflow, we first try to open up non-master zones, then master zone to reach desired minAirflow parameter.
+ * state_expiration: Number of seconds since last state update to consider saved state no longer valid (e.g. when some parts of the system are not working, need to discard everything we thought we knew about the system)
+ * override_activate_time: number of seconds system needs to be working without interruption before enabling master zone override functionality. This need to be long enough for the schedule to reset temperatures, if some override was applied and not reset.
 
 Sample configuration for 1 zone:
 
@@ -17,6 +19,7 @@ Sample configuration for 1 zone:
         "master": true,
         "thermostat": {
             "type": "cli",
+            "threshold": 2,
             "connection": {
                 "command": "echo '{}'"
             }
@@ -31,6 +34,12 @@ Sample configuration for 1 zone:
         ],
         "airflow": 4
     }
+
+Zone configuration parameters:
+
+ * master: needs to be true for the zone that has a thermostat controlling equipment. Exactly one master zone is required for a valid configuration
+ * thermostat.threshold: number of degrees a thermostat can be off, when we're considering applying master override.
+ * airflow: arbitrary units of airflow the zone provides when fully opened. Used in calculation of min_airflow in overall system parameters.
 
 General application configuration parameters are set in environment variables. See .env.example file.
 
