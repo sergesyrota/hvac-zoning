@@ -10,7 +10,7 @@ class Factory {
             case 'nest':
                 $cacheFile = null;
                 if (!empty(getenv('NEST_CACHE_FILE_PREFIX'))) {
-                    $cacheFile = getenv('NEST_CACHE_FILE_PREFIX') . md5($config->connection->bearer_token);
+                    $cacheFile = getenv('NEST_CACHE_FILE_PREFIX') . md5(getenv($config->connection->bearer_token));
                 }
                 $connector = new Connector\Nest(
                     getenv($config->connection->bearer_token),
