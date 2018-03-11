@@ -71,7 +71,7 @@ class App {
                 $zonesOpen++;
             }
         }
-        $this->log->addDebug("Number of zones to open: " . $zonesOpen);
+        $this->log->addDebug("Number of non-master zones to open: " . $zonesOpen);
         // See if we want to override master zone (not supported in "auto" mode, as heat/cool difference might collide)
         // Also need to make sure we've been uninterrupted with state file for long enough.
         do {
@@ -126,15 +126,13 @@ class App {
 
     private function initState() {
         $file = getenv('STATE_FILE');
-        $this->log->addDebug("State file path: " . $file);
         if (!empty($file) && is_readable($file)) {
             $state = json_decode(file_get_contents($file));
-            $this->log->addDebug("Time since state update: " . (time()-$state->last_update));
-            $this->log->addDebug("state expiration: " . ($this->appConfig->state_expiration));
             if (empty($state) // Don't have a valid state file
                 || empty($state->last_update) // State last update is unknown
                 || (time()-$state->last_update) > $this->appConfig->state_expiration // Last state update is too old
             ) {
+                $this->log->addInfo("Invalid state file or it's been too long since update. Reinit to empty.");
                 $this->state = $this->getEmptyState();
                 return;
             }
