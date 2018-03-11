@@ -74,7 +74,14 @@ class Nest {
             throw new \Exception("Target temperature adjustment is only supported in cool or heat modes, not " . $data->hvac_mode);
         }
         $res = $this->apiCall($this->thermostatId, 'PUT', json_encode(['target_temperature_f' => $targetF]));
-        var_dump($res);
+        $data = json_decode($res);
+        if ($data === false) {
+            throw new \Exception("Error setting thermostat temperature " . __CLASS__ . "; Invalid response.");
+        }
+        if (!empty($data->error)) {
+            throw new \Exception("NEST API error: " . $data->message);
+        }
+        return true;
     }
 
     /**
