@@ -55,12 +55,6 @@ class App {
             return;
         }
 
-        // Check if overrides have been canceled out by some external action
-        if ($this->state->override->present && $master->getChecksum() != $this->state->master_checksum) {
-            $this->state->override->present = false;
-            $this->state->master_checksum = '';
-        }
-
         // Only calls matching mode would be respected
         $zonesOpen = 0; // increment each time we have zone that we don't want to close, except master
         foreach ($this->tstatInstance as $id=>$tstat) {
@@ -80,24 +74,45 @@ class App {
         $this->log->addDebug("Number of zones to open: " . $zonesOpen);
         // See if we want to override master zone (not supported in "auto" mode, as heat/cool difference might collide)
         // Also need to make sure we've been uninterrupted with state file for long enough.
-        $this->log->addDebug("Time since init of state: " . (time() - $this->state->init_time));
-        if ($masterMode != iThermostat::MODE_AUTO
-            && $zonesOpen > 0
-            && $master->getCall() == iThermostat::MODE_OFF
-            && (time() - $this->state->init_time) > $this->appConfig->override_activate_time
-        ) {
+        do {
+            if ($zonesOpen == 0) {
+                // No additional zones are open, so override is not necessary
+                break;
+            }
+            if ($master->getCall() != iThermostat::MODE_OFF) {
+                // Master zone is already on, so no override necessary.
+                break;
+            }
+            if ($this->state->override_present) {
+                // Override was already set, so no need to do anything.
+                break;
+            }
+            if ($masterMode == iThermostat::MODE_AUTO) {
+                $this->log->addDebug("Overrides are not supported in auto mode");
+                break;
+            }
+            if ((time() - $this->state->init_time) < $this->appConfig->override_activate_time) {
+                $this->log->addDebug("State data is too new, needs to work for a bit longer to be sure.");
+                break;
+            }
             // Override master by threshold
             $this->log->addInfo("Setting override for master zone");
             $master->setOverride();
-            $this->state->override->present = true;
+            $this->state->override_present = true;
             $this->state->master_checksum = $master->getChecksum();
-        }
-        if ($zonesOpen == 0 && $this->state->override->present) {
+        } while (false); // run above code only once, so that we can use breaks for more readability
+        // Override flag will not be removed until all zones reach target temperatures
+        // If temperature was overwritten in the meantime (e.g. override rolled back by user), we'll not try again
+        if ($zonesOpen == 0 && $this->state->override_present) {
             // remove master override
             // keep all zones open?
-            $this->log->addInfo("Removing override for master zone");
-            $master->removeOverride();
-            $this->state->override->present = false;
+            if ($this->state->master_checksum == $master->getChecksum()) {
+                $this->log->addInfo("Setting temperature back to remove override.");
+                $master->removeOverride();
+            } else {
+                $this->log->addInfo("Thermostat data was externally modified. Override flag removed, but temperature not changed.");
+            }
+            $this->state->override_present = false;
             $this->state->master_checksum = $master->getChecksum();
         }
         // Close master zone if some others are open
@@ -138,9 +153,7 @@ class App {
             // Indicates how long we've had uninterrupted operation
             'init_time' => time(),
             'master_checksum' => '',
-            'override' => (object)[
-                'present' => false,
-            ]
+            'override_present' =>  false,
         ];
     }
 
