@@ -40,7 +40,7 @@ class Nest {
         // Use cache file if we have it configured
         if (!empty($this->cacheFile)) {
             if (!file_exists($this->cacheFile)
-                || (time() - filemtime($this->cacheFile)) > $ttl
+                || (time() - filemtime($this->cacheFile)) >= $ttl
                 || empty(json_decode(file_get_contents($this->cacheFile))))
             {
                 $allData = $this->getDatafromApi();
@@ -81,6 +81,8 @@ class Nest {
         if (!empty($data->error)) {
             throw new \Exception("NEST API error: " . $data->message);
         }
+        // Refresh data, as we've just messed with stuff, and need to make sure we get full current state
+        $this->getData(0);
         return true;
     }
 
