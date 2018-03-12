@@ -114,13 +114,14 @@ class App {
             }
             $this->state->override_present = false;
             $this->state->master_checksum = $master->getChecksum();
+        } else { // NOTE: vent moves will not be executed if we've removed the override. This is to prevent conditioning master zone for an extra minute.
+            // Close master zone if some others are open
+            if ($zonesOpen > 0) {
+                $ventTarget[$this->masterZoneId] = 0;
+            }
+            // Execute all moves
+            $this->executeVentMoves($ventTarget);
         }
-        // Close master zone if some others are open
-        if ($zonesOpen > 0) {
-            $ventTarget[$this->masterZoneId] = 0;
-        }
-        // Execute all moves
-        $this->executeVentMoves($ventTarget);
         $this->saveState();
     }
 
