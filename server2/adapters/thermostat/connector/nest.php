@@ -44,6 +44,9 @@ class Nest {
                 || empty(json_decode(file_get_contents($this->cacheFile))))
             {
                 $allData = $this->getDatafromApi();
+                if (empty($allData)) {
+                    throw new \Exception("Cannot get data from NEST API.");
+                }
                 file_put_contents($this->cacheFile, json_encode($allData));
                 // Need to make sure next time we query mtime, it's not retreived form cache
                 clearstatcache();
