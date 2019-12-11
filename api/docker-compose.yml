@@ -1,0 +1,15 @@
+version: '3'
+services:
+  fpm:
+    build: .
+    volumes:
+      - ./src:/src
+  web:
+    image: nginx:latest
+    ports:
+      - 8080:80
+    volumes:
+      - ./src:/src
+      - ./nginx/conf:/etc/nginx/conf.d/000_localhost.conf
+  redis:
+    image: redis:4-alpine

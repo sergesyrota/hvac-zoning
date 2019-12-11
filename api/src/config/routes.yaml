@@ -1,0 +1,11 @@
+#index:
+#    path: /
+#    defaults: { _controller: 'App\Controller\DefaultController::index' }
+
+thermostat_list:
+    path: /thermostat
+    controller: App\Controller\ThermostatController::list
+
+thermostat_selected:
+    path: /thermostat/{id}
+    controller: App\Controller\ThermostatController::status
