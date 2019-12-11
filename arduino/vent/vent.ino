@@ -15,6 +15,9 @@ char buf [100];
 // Error handling
 bool errorPresent = false;
 byte errorNum;
+// Tracks when setDegrees was called last
+unsigned long lastSetDegreesCommandMillis;
+bool atDefaultPosition = false; // set this to true when going to default so we don't do it over and over again
 
 // Values we store in EEPROM
 struct configuration_t conf = {
@@ -23,7 +26,11 @@ struct configuration_t conf = {
   9600UL, //unsigned long baudRate; // Serial/RS-485 rate: 9600, 14400, 19200, 28800, 38400, 57600, or 115200
   50, //int endstopCorrectionSteps; // Number of steps to take after we hit and endstop to land at fully closed position
   10, //int motorSpeed; // Motor speed in RPM of the final output shaft
+  1200, //int positionTimeout; // When this many seconds passes since last command, reset position to default
+  60, //int defaultDegrees; // Default degrees to set when timeout since last command is reached
 };
+
+void(* resetFunc) (void) = 0; //declare reset function @ address 0
 
 void setup()
 {
@@ -89,6 +96,11 @@ void loop()
       net.sendResponse("OK");
       motor.step(tmp);
       motor.stopIdleHold();
+    } else if (net.assertCommand("reset")) {
+      net.sendResponse("Rebooting");
+      // wait a bit for send buffer to clear, or somehting.
+      delay(10);
+      resetFunc();  // reboot
     } else {
       net.sendResponse("Unrecognized command");
     }
@@ -97,6 +109,15 @@ void loop()
   // Update sensor data
   if (millis() - sensor.lastAttemptReadTime > BMP_SAMPLE_INTERVAL) {
     readSensor();
+  }
+
+  // Check if position timeout is reached
+  if (!atDefaultPosition && 
+    conf.positionTimeout > 0 && 
+    ((millis() - lastSetDegreesCommandMillis)/1000) > conf.positionTimeout
+  ) {
+    goToDegree(conf.defaultDegrees);
+    atDefaultPosition = true;
   }
 
   // Just in case, always stop idle hold, so that we're not overheating the motor (although we should've set this after every move)
@@ -111,6 +132,7 @@ void processSetCommands()
       // Response first, as rotation can take a while
       net.sendResponse("Working");
       goToDegree(tmp);
+      atDefaultPosition = false;
     } else {
       net.sendResponse("ERROR");
     }
@@ -120,6 +142,24 @@ void processSetCommands()
       conf.motorSpeed = tmp;
       saveConfig();
       motor.setSpeed(conf.motorSpeed);
+      net.sendResponse("OK");
+    } else {
+      net.sendResponse("ERROR");
+    }
+  } else if (net.assertCommandStarts("setPositionTimeout:", buf)) {
+    int tmp = strtol(buf, NULL, 10);
+    if (tmp > 0 && tmp <= 32767) { // Upper limit of int
+      conf.positionTimeout = tmp;
+      saveConfig();
+      net.sendResponse("OK");
+    } else {
+      net.sendResponse("ERROR");
+    }
+  } else if (net.assertCommandStarts("setDefaultDegrees:", buf)) {
+    int tmp = strtol(buf, NULL, 10);
+    if (tmp > 0 && tmp <= 90) { // Doesn't make sense to set default outside of 0-90.
+      conf.defaultDegrees = tmp;
+      saveConfig();
       net.sendResponse("OK");
     } else {
       net.sendResponse("ERROR");

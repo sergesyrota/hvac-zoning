@@ -1,5 +1,5 @@
 #define NET_ADDRESS "MasterVent1"
-#define CONFIG_VERSION "VN2"
+#define CONFIG_VERSION "VN3"
 
 #define RS485_CONTROL_PIN 2
 #define ENDSTOP_PIN 3
@@ -18,6 +18,8 @@ struct configuration_t {
   unsigned long baudRate; // Serial/RS-485 rate: 9600, 14400, 19200, 28800, 38400, 57600, or 115200
   int endstopCorrectionSteps; // Number of steps to take after we hit and endstop to land at fully closed position
   int motorSpeed; // Motor speed in RPM of the final output shaft
+  int positionTimeout; // When this many seconds passes since last command, reset position to default
+  int defaultDegrees; // Default degrees to set when timeout since last command is reached
 };
 
 struct bmp180Data {
