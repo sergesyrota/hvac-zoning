@@ -133,6 +133,7 @@ void processSetCommands()
       net.sendResponse("Working");
       goToDegree(tmp);
       atDefaultPosition = false;
+      lastSetDegreesCommandMillis = millis();
     } else {
       net.sendResponse("ERROR");
     }
@@ -148,7 +149,7 @@ void processSetCommands()
     }
   } else if (net.assertCommandStarts("setPositionTimeout:", buf)) {
     int tmp = strtol(buf, NULL, 10);
-    if (tmp > 0 && tmp <= 32767) { // Upper limit of int
+    if (tmp >= 0 && tmp <= 32767) { // Upper limit of int
       conf.positionTimeout = tmp;
       saveConfig();
       net.sendResponse("OK");

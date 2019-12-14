@@ -110,9 +110,9 @@ void processSetCommands()
       net.sendResponse("ERROR");
     }
   } else if (net.assertCommandStarts("setTempCorrection:", buf)) {
-    float tmp = strtof(buf, NULL);
+    float tmp = String(buf).toFloat();
     if (tmp > -10.0 && tmp < 10.0) {
-      conf.tempCorrection = tmp;
+      conf.tempCorrection = conf.tempCorrection + tmp;
       saveConfig();
       net.sendResponse("OK");
     } else {
