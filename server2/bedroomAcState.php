@@ -9,6 +9,15 @@ if (!empty($_POST['reset'])) {
     file_put_contents($bedEnv['STATE_FILE'], json_encode($state_mod, JSON_PRETTY_PRINT));
 }
 
+echo '<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="mobile-web-app-capable" content="yes">
+</head>
+<body style="font-size:130%;">
+';
+
 // Script state details
 $state = json_decode(file_get_contents($bedEnv['STATE_FILE']), true);
 echo "<b>Last update</b>: ".date('H:i:s', time() - $state['last_update'] + 6*3600)." ago.<br>\n";
@@ -22,13 +31,14 @@ echo "<ul>";
 foreach ($nest as $tstat) {
 //    print_r($tstat);
     echo "<li>";
-    echo "{$tstat['name']}: <strong>{$tstat['ambient_temperature_f']}</strong> → {$tstat['target_temperature_f']} ({$tstat['hvac_state']})";
+    echo "{$tstat['name']}: <strong style='font-size:150%'>{$tstat['ambient_temperature_f']}</strong> → {$tstat['target_temperature_f']} ({$tstat['hvac_state']})";
     echo "</li>";
 }
 echo "</ul>";
 
 echo "<form action='".basename(__FILE__)."' method=POST><input type=hidden name=reset value=1><input type=submit value='Reset override status'></form>";
 
+echo '</body></html>';
 
 function getCustomEnv($file) {
     $contents = file_get_contents($file);
