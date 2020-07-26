@@ -85,6 +85,7 @@ class App {
             }
             if ($this->state->override_present) {
                 // Override was already set, so no need to do anything.
+                $this->log->addDebug("Override was already set at {$this->state->override_set_time}. Not adding another one");
                 break;
             }
             if ($masterMode == iThermostat::MODE_AUTO) {
@@ -100,6 +101,7 @@ class App {
             $master->setOverride();
             $this->state->override_present = true;
             $this->state->master_checksum = $master->getChecksum();
+            $this->state->override_set_time = date('Y-m-d H:i:s');
         } while (false); // run above code only once, so that we can use breaks for more readability
         // Override flag will not be removed until all zones reach target temperatures
         // If temperature was overwritten in the meantime (e.g. override rolled back by user), we'll not try again
@@ -114,6 +116,7 @@ class App {
             }
             $this->state->override_present = false;
             $this->state->master_checksum = $master->getChecksum();
+            $this->state->override_set_time = '';
         } else { // NOTE: vent moves will not be executed if we've removed the override. This is to prevent conditioning master zone for an extra minute.
             // Close master zone if some others are open
             if ($zonesOpen > 0) {
@@ -162,7 +165,7 @@ class App {
             return;
         }
         $this->state->last_update = time();
-        file_put_contents($file, json_encode($this->state, true));
+        file_put_contents($file, json_encode($this->state, JSON_PRETTY_PRINT));
     }
 
     private function initEquipment() {
