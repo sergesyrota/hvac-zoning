@@ -32,6 +32,8 @@ foreach ($nest as $tstat) {
 //    print_r($tstat);
     echo "<li>";
     echo "{$tstat['name']}: <strong style='font-size:150%'>{$tstat['ambient_temperature_f']}</strong> → {$tstat['target_temperature_f']} ({$tstat['hvac_state']})";
+    $connectionTimeDiff = time() - strtotime($tstat['last_connection']);
+    echo "<br>&nbsp; &nbsp; $connectionTimeDiff";
     echo "</li>";
 }
 echo "</ul>";

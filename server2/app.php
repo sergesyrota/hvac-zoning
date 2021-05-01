@@ -45,7 +45,7 @@ class App {
             $masterMode = $master->getCall();
         }
         // If master mode is auto switching, then we don't know what'll happen until master makes a call
-        // This is not the best implementation. Need to figure out something better.
+
         if ($masterMode == iThermostat::MODE_OFF) {
             // We need to close master thermostat vent, and open all others
             $ventTarget[$this->masterZoneId] = 0;
@@ -122,10 +122,24 @@ class App {
             if ($zonesOpen > 0) {
                 $ventTarget[$this->masterZoneId] = 0;
             }
+            // If all non-master zones are closed, while master mode is "off" - revert all vents to default position for recirculation
+            if ($zonesOpen == 0 && $master->getCall() == iThermostat::MODE_OFF) {
+                $this->log->addInfo("Everything's off, moving to default positions to allow for recirculation");
+                $ventTarget = $this->getDefaultVentTarget(); // full override
+            }
             // Execute all moves
             $this->executeVentMoves($ventTarget);
         }
         $this->saveState();
+    }
+
+    private function getDefaultVentTarget() {
+        $ventTarget = [];
+        foreach ($this->zoneConfig as $id=>$zone) {
+            // When not set, leave fully open
+            $ventTarget[$id] = (empty($zone->defaultOpen) ? 100 : $zone->defaultOpen);
+        }
+        return $ventTarget;
     }
 
     private function initState() {

@@ -61,3 +61,10 @@ See adapters/vent/factory.php
 Easiest way to run the app:
 
     env - $(cat ./.env) php ./cron.php
+
+# TODO
+
+* When `last_connection` exceeds a certain threshold - fall back into "fail safe" mode
+* When room temperature doesn't change for significant period of time after starting the system - fall back into "fail safe" mode
+* Implement periodic calibration
+* Implement extra fail safe when temp probe on exit has an extreme reading
