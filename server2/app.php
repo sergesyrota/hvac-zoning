@@ -218,6 +218,7 @@ class App {
                     $vent->setOpen($percent);
                     sleep($delay);
                 } catch (\Exception $e) {
+                    $this->log->addError("Exception moving vent {$id}");
                     // Catching all exceptions, as we need to execute all of the moves, even if some don't work.
                     $lastException = $e;
                 }
