@@ -144,7 +144,7 @@ class Google {
         $res = curl_exec($ch);
         return $res;
     }
-    
+
     public function getAuthToken() {
         if (empty($this->authToken) || $this->tokenExpireTimestamp <= time()) {
             $ch = curl_init();
@@ -170,13 +170,13 @@ class Google {
     }
 }
 
-$g = new Google(
-    '1031175016718-eur8ac46vkaeipmddqigr4vl4jhn8pma.apps.googleusercontent.com',
-    '2fZoz447i-YN34niFcQFq1dK',
-    '1//04yOfh622YBN2CgYIARAAGAQSNwF-L9IrZcHJCYcnlL-CJneNeQfNZ-Nrhco0uhFynzwz-jNZ4_R01yZPlZ-XeE2ozwPfGbEBCrQ',
-    'test');
-//$g->getData();
-var_dump($g->getAuthToken());
-echo "\n";
-var_dump($g->getAuthToken());
-echo "\n";
+// $g = new Google(
+//     'Client ID here',
+//     'secret here',
+//     'refresh token here',
+//     'test');
+// //$g->getData();
+// var_dump($g->getAuthToken());
+// echo "\n";
+// var_dump($g->getAuthToken());
+// echo "\n";
