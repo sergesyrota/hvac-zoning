@@ -15,8 +15,6 @@ class Homebridge {
     private $tokenExpireTimestamp;
     // UUID of "Accessory" representing the thermostat instance
     private $accessoryId;
-    // Cache file to use to dump all thermostats
-    private $cacheFile;
     // Last update of the data locally
     private $updateTime;
     // Cached full response
@@ -30,9 +28,8 @@ class Homebridge {
      * @param string $username
      * @param string $password
      * @param string $accessoryId UUID of the thermostat in Homekit
-     * @param string $cacheFile Path to a file that can be used to store API response in full, allowing us to limit number of requests
      */
-    public function __construct($baseURL, $username, $password, $accessoryId, $cacheFile = null) {
+    public function __construct($baseURL, $username, $password, $accessoryId) {
         if (empty($baseURL) || empty($username) || empty($password)) {
             throw new \Exception("Base URL, username, and password are all required.");
         }
@@ -42,7 +39,6 @@ class Homebridge {
         $this->baseURL=$baseURL;
         $this->username=$username;
         $this->password=$password;
-        $this->cacheFile = $cacheFile;
         $this->accessoryId = $accessoryId;
     }
 
@@ -52,33 +48,20 @@ class Homebridge {
      * @param int $ttl Number of seconds the data will expire after initial acquisition. Used for both file cache refresh, and local variable refresh.
      */
     public function getData($ttl=45) {
-        // Use cache file if we have it configured
-        if (!empty($this->cacheFile)) {
-            if (!file_exists($this->cacheFile)
-                || (time() - filemtime($this->cacheFile)) >= $ttl
-                || empty(json_decode(file_get_contents($this->cacheFile))))
-            {
-                $allData = $this->getDatafromApi();
-                if (empty($allData)) {
-                    throw new \Exception("Cannot get data from NEST API.");
-                }
-                file_put_contents($this->cacheFile, json_encode($allData));
-                // Need to make sure next time we query mtime, it's not retreived form cache
-                clearstatcache();
-                return $allData->{$this->thermostatId};
-            } else {
-                $allData = json_decode(file_get_contents($this->cacheFile));
-                return $allData->{$this->thermostatId};
-            }
-        }
-        // If cache file is not specified, just cache data in class variable
+        // Cache data locallu not to have to make multiple API calls
         if (time() - $this->updateTime <= $ttl) {
             return $this->response;
         }
-        $allData = $this->getDatafromApi();
+        $thermostatData = $this->getDatafromApi();
         $this->updateTime = time();
-        $this->response = $allData;
-        return $this->response->{$this->thermostatId};
+        $this->response = $thermostatData;
+        foreach ($this->response['serviceCharacteristics'] as $key=>$characteristic) {
+          if (isset($this->response['serviceCharacteristicsByType'][$characteristic['type']])) {
+            throw new \Exception('Duplicate characteristic by type detected ('.$characteristic['type'].')');
+          }
+          $this->response['serviceCharacteristicsByType'][$characteristic['type']] = $characteristic;
+        }
+        return $this->response;
     }
 
     /**
@@ -88,20 +71,29 @@ class Homebridge {
      */
     public function setTarget($targetF) {
         $data = $this->getData();
-        if (!in_array($data->hvac_mode, ['cool', 'heat'])) {
-            throw new \Exception("Target temperature adjustment is only supported in cool or heat modes, not " . $data->hvac_mode);
+        // https://developers.homebridge.io/#/characteristic/TargetHeatingCoolingState
+        // 0 = off, 1 = heat, 2 = cool, 3 = auto
+        if (!in_array($data['serviceCharacteristicsByType']['TargetHeatingCoolingState']['value'], [1, 2])) {
+            throw new \Exception("Target temperature adjustment is only supported in cool (2) or heat (1) modes, not " . $data['serviceCharacteristicsByType']['TargetHeatingCoolingState']['value']);
         }
-        $res = $this->apiCall($this->thermostatId, 'PUT', json_encode(['target_temperature_f' => $targetF]));
-        $data = json_decode($res);
+        $res = $this->apiCall('PUT', json_encode([
+          'characteristicType' => 'TargetTemperature',
+          'value' => strval($this->FtoC($targetF))
+        ]));
+        $data = json_decode($res, true);
         if ($data === false) {
-            throw new \Exception("Error setting thermostat temperature " . __CLASS__ . "; Invalid response.");
+            throw new \Exception("Error setting thermostat temperature " . __CLASS__ . "; Invalid response: " . $res);
         }
-        if (!empty($data->error)) {
-            throw new \Exception("NEST API error: " . $data->message);
+        if (!empty($data['error'])) {
+            throw new \Exception("Homebridge API error: " . $res);
         }
         // Refresh data, as we've just messed with stuff, and need to make sure we get full current state
         $this->getData(0);
         return true;
+    }
+
+    private function FtoC($F) {
+      return ($F - 32) * 5/9;
     }
 
     /**
@@ -109,27 +101,26 @@ class Homebridge {
      */
     private function getDatafromApi() {
         $res = $this->apiCall();
-        $data = json_decode($res);
+        $data = json_decode($res, true);
         if ($data === false) {
             throw new \Exception("Error getting data from thermostat " . __CLASS__ . "; Invalid response.");
         }
-        if (!empty($data->error)) {
-            throw new \Exception("NEST API error: " . $data->message);
+        if (empty($data['uuid'])) {
+            throw new \Exception("Homebridge API error: " . $res);
         }
         return $data;
     }
 
     /**
-     * Makes an API call to Google
+     * Makes an API call to Homebridge
      *
-     * @param string $tstatId If not provided, all authorized thermostats are returned. If provided, restricted to the ID only
      * @param string $method HTTP method of the API request
      * @param string $reqBody If we're making a POST/PATCH/etc data for the request to pass on
      */
-    private function apiCall($tstatId = '', $method = 'GET', $reqBody = '') {
-        $url = $this->baseURL . $tstatId;
+    private function apiCall($method = 'GET', $reqBody = '') {
+        $url = $this->baseURL . "/api/accessories/" . $this->accessoryId;
         $headers = [
-            'Authorization: Bearer ' . $this->getAuthToken,
+            'Authorization: Bearer ' . $this->getAuthToken(),
             'Content-type: application/json',
         ];
 
@@ -177,14 +168,3 @@ class Homebridge {
         return $this->authToken;
     }
 }
-
-$g = new Homebridge(
-    'http://homebridge.syrota.com',
-    '',
-    '',
-    'accessory ID');
-//$g->getData();
-var_dump($g->getAuthToken());
-echo "\n";
-var_dump($g->getAuthToken());
-echo "\n";
