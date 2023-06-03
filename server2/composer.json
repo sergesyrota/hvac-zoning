@@ -6,9 +6,7 @@
         }
   ],
   "autoload": {
-      "psr-4": {
-          "Thermostat\\": "adapters/thermostat/"
-      }
+      "classmap": ["adapters/thermostat"]
   },
   "require": {
     "sergesyrota/syrota-automation": "dev-master",

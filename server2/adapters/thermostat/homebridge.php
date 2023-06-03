@@ -9,7 +9,7 @@ class Homebridge implements iThermostat {
     private $threshold = 0;
 
     /**
-     * NEST thermostat adapter
+     * Homebridge thermostat adapter
      *
      * @param \Thermostat\Connector\Homebridge $connector Instance of a connector for communication with the API
      * @param int $threshold Temperature threshold by which it's OK to overshot the target (needed for master zone only)

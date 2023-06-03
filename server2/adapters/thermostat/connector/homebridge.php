@@ -4,8 +4,6 @@ namespace Thermostat\Connector;
 
 class Homebridge {
 
-
-
     // Connection token for API
     private $baseURL;
     private $username;

@@ -21,7 +21,7 @@ class Factory {
                 return new Nest($connector, $threshold);
             case 'homebridge':
                 $connector = new Connector\Homebridge(
-                    getenv('HOMEBRIDGE_BASEURL')
+                    getenv('HOMEBRIDGE_BASEURL'),
                     getenv($config->connection->username),
                     getenv($config->connection->password),
                     getenv($config->connection->device_id)
