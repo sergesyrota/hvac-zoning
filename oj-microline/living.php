@@ -1,7 +1,7 @@
 <?php
 
 $price = getCurrentHourEstimate();
-$returnToSchedule = ($price <= 12);
+$returnToSchedule = ($price <= 10);
 $cacheFile = '/tmp/oj-thermostat.json';
 
 $cacheData = json_decode(file_get_contents($cacheFile), true);

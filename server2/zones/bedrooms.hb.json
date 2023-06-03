@@ -1,0 +1,81 @@
+{
+    "parameters": {
+        "minAirflow": 4,
+        "min_airflow": 4,
+        "state_expiration": 1200,
+        "override_activate_time": 21600
+    },
+    "zones": {
+        "1": {
+            "name": "Master Bedroom",
+            "thermostat": {
+                "type": "homebridge",
+                "connection": {
+                    "username": "HOMEBRIDGE_USERNAME",
+                    "password": "HOMEBRIDGE_PASSWORD",
+                    "device_id": "HOMEBRIDGE_MASTER_THERMOSTAT"
+                }
+            },
+            "vents": [
+                {
+                    "type": "rs485v1",
+                    "connection": {
+                        "device": "MasterVent1"
+                    }
+                }
+            ],
+            "airflow": 4,
+            "defaultOpen": 100
+        },
+        "2": {
+            "name": "Middle Bedroom",
+            "thermostat": {
+                "type": "homebridge",
+                "connection": {
+                    "username": "HOMEBRIDGE_USERNAME",
+                    "password": "HOMEBRIDGE_PASSWORD",
+                    "device_id": "HOMEBRIDGE_MIDDLE_THERMOSTAT"
+                }
+            },
+            "vents": [
+                {
+                    "type": "rs485v1",
+                    "connection": {
+                        "device": "MiddleVent1"
+                    }
+                },
+                {
+                    "type": "rs485v1",
+                    "connection": {
+                        "device": "MiddleVent2"
+                    }
+                }
+            ],
+            "airflow": 2,
+            "defaultOpen": 100
+        },
+        "3": {
+            "name": "South Bedroom",
+            "master": true,
+            "thermostat": {
+                "type": "homebridge",
+                "threshold": 2,
+                "connection": {
+                    "username": "HOMEBRIDGE_USERNAME",
+                    "password": "HOMEBRIDGE_PASSWORD",
+                    "device_id": "HOMEBRIDGE_SOUTH_THERMOSTAT"
+                }
+            },
+            "vents": [
+                {
+                    "type": "rs485v1",
+                    "connection": {
+                        "device": "GuestVent"
+                    }
+                }
+            ],
+            "airflow": 4,
+            "defaultOpen": 100
+        }
+    }
+}
