@@ -82,4 +82,9 @@ class Cli implements iThermostat {
         $this->response = $data;
         return $data;
     }
+
+    // Not supported
+    public function setLogger() {
+
+    }
 }

@@ -187,6 +187,7 @@ class App {
     private function initEquipment() {
         foreach ($this->zoneConfig as $id=>$zone) {
             $adapter = \Thermostat\Factory::get($zone->thermostat);
+            $adapter->setLogger($this->log);
 //            $this->log->addDebug("Seconds since check-in for {$id}: " . $adapter->getSecondsSinceLastUpdate());
             $this->tstatInstance[$id] = $adapter;
             if (!empty($zone->master) && $zone->master === true) {

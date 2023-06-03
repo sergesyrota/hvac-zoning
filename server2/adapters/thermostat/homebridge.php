@@ -7,6 +7,7 @@ class Homebridge implements iThermostat {
     private $con;
     // Threshold
     private $threshold = 0;
+    private $log;
 
     /**
      * Homebridge thermostat adapter
@@ -17,6 +18,10 @@ class Homebridge implements iThermostat {
     public function __construct(Connector\Homebridge $connector, $threshold = 0) {
         $this->con = $connector;
         $this->threshold = $threshold;
+    }
+
+    public function setLogger($logger) {
+      $this->_logger = $logger;
     }
 
     /**
@@ -73,6 +78,7 @@ class Homebridge implements iThermostat {
         $data = $this->con->getData();
         $string = $data['serviceCharacteristicsByType']['TargetHeatingCoolingState']['value'];
         $string .= $data['serviceCharacteristicsByType']['TargetTemperature']['value'];
+        $this->log->addDebug("Thermostat change checksum string: " . $string);
         return md5($string);
     }
 

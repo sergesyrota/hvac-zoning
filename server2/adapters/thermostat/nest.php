@@ -186,4 +186,9 @@ class Nest implements iThermostat {
         }
         throw new Exception('Cannot figure out AutoDelta.');
     }
+
+    // Not supported
+    public function setLogger() {
+
+    }
 }
