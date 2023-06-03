@@ -70,7 +70,7 @@ class App {
                 // Should be already 100, as it was initialized, but just in case...
                 $ventTarget[$id] = 100;
                 $zonesOpen++;
-                $zonesOpenNames[] = $this->zoneConfig[$id]->name;
+                $zonesOpenNames[] = $this->zoneConfig->{$id}->name;
             }
         }
         $this->log->addDebug("Number of non-master zones to open: ", $zonesOpenNames);
@@ -216,7 +216,7 @@ class App {
         $lastException = null;
         $ventTargetsText = "";
         foreach ($ventTarget as $id=>$percent) {
-            $ventTargetsText .= $this->zoneConfig[$id]->name . " = $percent%; ";
+            $ventTargetsText .= $this->zoneConfig->{"$id"}->name . " = $percent%; ";
             foreach ($this->ventInstance[$id] as $vent) {
                 try {
                     $vent->setOpen($percent);
