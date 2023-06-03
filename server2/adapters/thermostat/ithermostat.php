@@ -21,7 +21,4 @@ interface iThermostat {
     // - cool
     // - off
     public function getCall();
-
-    // Temperature difference between current and target
-    public function deltaT($unit='F');
 }
