@@ -21,7 +21,7 @@ class Homebridge implements iThermostat {
     }
 
     public function setLogger($logger) {
-      $this->_logger = $logger;
+      $this->log = $logger;
     }
 
     /**

@@ -104,6 +104,7 @@ class App {
             $this->state->override_present = true;
             $this->state->master_checksum = $master->getChecksum();
             $this->state->override_set_time = date('Y-m-d H:i:s');
+            $this->log->addInfo("New checksum: " . $this->state->master_checksum);
         } while (false); // run above code only once, so that we can use breaks for more readability
         // Override flag will not be removed until all zones reach target temperatures
         // If temperature was overwritten in the meantime (e.g. override rolled back by user), we'll not try again
@@ -114,7 +115,8 @@ class App {
                 $this->log->addInfo("Setting temperature back to remove override.");
                 $master->removeOverride();
             } else {
-                $this->log->addInfo("Thermostat data was externally modified. Override flag removed, but temperature not changed.");
+                $this->log->addInfo("Thermostat data was externally modified. Override flag removed, but temperature not changed. ");
+                $this->log->addInfo("Old: " . $this->state->master_checksum . "; New: " . $master->getChecksum());
             }
             $this->state->override_present = false;
             $this->state->master_checksum = $master->getChecksum();
