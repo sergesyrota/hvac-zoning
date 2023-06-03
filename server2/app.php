@@ -57,6 +57,7 @@ class App {
 
         // Only calls matching mode would be respected
         $zonesOpen = 0; // increment each time we have zone that we don't want to close, except master
+        $zonesOpenNames = [];
         foreach ($this->tstatInstance as $id=>$tstat) {
             // Skipping master
             if ($this->masterZoneId == $id) {
@@ -69,9 +70,10 @@ class App {
                 // Should be already 100, as it was initialized, but just in case...
                 $ventTarget[$id] = 100;
                 $zonesOpen++;
+                $zonesOpenNames[] = $tstat->name;
             }
         }
-        $this->log->addDebug("Number of non-master zones to open: " . $zonesOpen);
+        $this->log->addDebug("Number of non-master zones to open: ", $zonesOpenNames);
         // See if we want to override master zone (not supported in "auto" mode, as heat/cool difference might collide)
         // Also need to make sure we've been uninterrupted with state file for long enough.
         do {
@@ -211,9 +213,10 @@ class App {
         // sorting all zones
         $ventTarget = $this->enforceMinAirflow($ventTarget);
         arsort($ventTarget);
-        $this->log->addDebug("Vent targets: ", $ventTarget);
         $lastException = null;
+        $ventTargetsText = "";
         foreach ($ventTarget as $id=>$percent) {
+            $ventTargetsText .= $this->tstatInstance[$id]->name . " = $percent%; ";
             foreach ($this->ventInstance[$id] as $vent) {
                 try {
                     $vent->setOpen($percent);
@@ -225,6 +228,7 @@ class App {
                 }
             }
         }
+        $this->log->addDebug($ventTargetsText);
         if (!empty($lastException)) {
             throw $lastException;
         }
