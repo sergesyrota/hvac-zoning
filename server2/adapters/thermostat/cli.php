@@ -84,7 +84,7 @@ class Cli implements iThermostat {
     }
 
     // Not supported
-    public function setLogger() {
+    public function setLogger($logger) {
 
     }
 }

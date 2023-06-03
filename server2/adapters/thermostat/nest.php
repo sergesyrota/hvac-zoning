@@ -188,7 +188,7 @@ class Nest implements iThermostat {
     }
 
     // Not supported
-    public function setLogger() {
+    public function setLogger($logger) {
 
     }
 }

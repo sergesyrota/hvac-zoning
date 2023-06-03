@@ -23,5 +23,5 @@ interface iThermostat {
     public function getCall();
 
     // Adds logging ability; Can be ignored if not supported
-    public function setLogger();
+    public function setLogger($logger);
 }
