@@ -19,6 +19,15 @@ class Factory {
                 );
                 $threshold = (isset($config->threshold) ? $config->threshold : 0);
                 return new Nest($connector, $threshold);
+            case 'homebridge':
+                $connector = new Connector\Homebridge(
+                    getenv('HOMEBRIDGE_BASEURL')
+                    getenv($config->connection->username),
+                    getenv($config->connection->password),
+                    getenv($config->connection->device_id)
+                );
+                $threshold = (isset($config->threshold) ? $config->threshold : 0);
+                return new Homebridge($connector, $threshold);
             default:
                 throw new \Exception("Unsupported thermostat type: " . $config->type);
         }
