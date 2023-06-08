@@ -49,6 +49,7 @@ See adapters/thermostat/factory.php
 
  * cli: run a shell command to obtain thermostat data
  * NEST: query the API to get status information. Connection information has environment variable names, rather than sensitive data.
+ * Homebridge: integrate with a homebridge server using login and password
 
 ### Supported vent adapters
 

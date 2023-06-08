@@ -74,9 +74,10 @@ class Homebridge {
         if (!in_array($data['serviceCharacteristicsByType']['TargetHeatingCoolingState']['value'], [1, 2])) {
             throw new \Exception("Target temperature adjustment is only supported in cool (2) or heat (1) modes, not " . $data['serviceCharacteristicsByType']['TargetHeatingCoolingState']['value']);
         }
+        $newTargetTemp = $this->FtoC($targetF);
         $res = $this->apiCall('PUT', json_encode([
           'characteristicType' => 'TargetTemperature',
-          'value' => strval($this->FtoC($targetF))
+          'value' => strval($newTargetTemp)
         ]));
         $data = json_decode($res, true);
         if ($data === false) {
@@ -85,8 +86,10 @@ class Homebridge {
         if (!empty($data['error'])) {
             throw new \Exception("Homebridge API error: " . $res);
         }
-        // Refresh data, as we've just messed with stuff, and need to make sure we get full current state
-        $this->getData(0);
+        // Update data so that we can track checksum correctly;
+        // Refreshing with a GET API call doesn't actually work with Homebridge immediately :(
+        $this->response['serviceCharacteristicsByType']['TargetTemperature']['value'] = $newTargetTemp;
+        $this->response['values']['TargetTemperature'] = $newTargetTemp;
         return true;
     }
 

@@ -75,9 +75,9 @@ class Homebridge implements iThermostat {
      * temperature has been set to exactly what it should be, and we need to discard our override state.
      */
     public function getChecksum() {
-        $data = $this->con->getData();
-        $string = $data['serviceCharacteristicsByType']['TargetHeatingCoolingState']['value'];
-        $string .= $data['serviceCharacteristicsByType']['TargetTemperature']['value'];
+        $data = $this->con->getData(0);
+        $string = "Mode=" . $data['serviceCharacteristicsByType']['TargetHeatingCoolingState']['value'] . ";";
+        $string .= "Target=". round($this->CtoF($data['serviceCharacteristicsByType']['TargetTemperature']['value'])) . "F;";
         $this->log->addDebug("Thermostat change checksum string: " . $string);
         return md5($string);
     }
