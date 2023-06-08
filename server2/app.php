@@ -237,16 +237,16 @@ class App {
             // If any of the vent moves fail
             // => moving everything to default
             $this->log->addError("Exception moving vent {$id} for zone " . $this->zoneConfig->{"$id"}->name);
-            try {
-                foreach ($this->zoneConfig as $id=>$zoneData) {
-                    $this->log->addError("Resetting vents for zone " . $this->zoneConfig->{"$id"}->name . " to default " . $zoneData['defaultOpen'] . "%");
-                    foreach ($this->ventInstance[$id] as $vent) {
-                        sleep($delay); // delay before the move, as if we have an exception thrown, we don't want delay to be skipped.
-                        $vent->setOpen($zoneData['defaultOpen']);
+            foreach ($this->zoneConfig as $id=>$zoneData) {
+                $this->log->addError("Resetting vents for zone " . $this->zoneConfig->{"$id"}->name . " to default " . $zoneData->defaultOpen . "%");
+                foreach ($this->ventInstance[$id] as $vent) {
+                    sleep($delay); // delay before the move, as if we have an exception thrown, we don't want delay to be skipped.
+                    try {
+                        $vent->setOpen($zoneData->defaultOpen);
+                    } catch (\Exception $null) {
+                        // nothing; we know there's going to be a problem anyways
                     }
                 }
-            } catch (\Exception $null) {
-              // nothing; we know there's going to be a problem anyways
             }
             // Re-throw the original exception so we can let upstream processes know something went wrong.
             throw $e;
