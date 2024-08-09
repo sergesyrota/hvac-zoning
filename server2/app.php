@@ -44,6 +44,7 @@ class App {
         if ($masterMode == iThermostat::MODE_AUTO) {
             $masterMode = $master->getCall();
         }
+        
         // If master mode is auto switching, then we don't know what'll happen until master makes a call
 
         if ($masterMode == iThermostat::MODE_OFF) {
@@ -229,6 +230,8 @@ class App {
             foreach ($ventTarget as $id=>$percent) {
                 $ventTargetsText .= $this->zoneConfig->{"$id"}->name . " = $percent%; ";
                 foreach ($this->ventInstance[$id] as $vent) {
+                    //if ($id == 1) {$percent = 100-$percent;}
+                    //$this->log->addDebug("{$id} => {$percent}%");
                     $vent->setOpen($percent);
                     sleep($delay);
                 }
