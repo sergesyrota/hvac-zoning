@@ -228,10 +228,13 @@ class App {
         // Try and do the moves
         try {
             // First go through all vents and check if they're in the error state
-            foreach ($ventTarget as $id=>$percent) {
-                foreach ($this->ventInstance[$id] as $vent) {
-                    if ($vent->errorPresent()) {
-                        $this->log->addError("Vent {$id} error: " . $vent->errorReason());
+            // if config parameter is enabled
+            if (!empty($this->appConfig->check_vent_errors) && $this->appConfig->check_vent_errors === true) {
+                foreach ($ventTarget as $id=>$percent) {
+                    foreach ($this->ventInstance[$id] as $vent) {
+                        if ($vent->errorPresent()) {
+                            $this->log->addError("Vent {$id} error: " . $vent->errorReason());
+                        }
                     }
                 }
             }
