@@ -7,6 +7,8 @@ class RS485v1 implements iVent {
     private $config;
     // Automation protocol library
     private $gm;
+    // Recording error reason from the last check
+    private $errorReason;
 
     public function __construct($config, \SyrotaAutomation\Gearman $gm) {
         $this->config = $config;
@@ -18,6 +20,20 @@ class RS485v1 implements iVent {
         if (empty($this->config->device)) {
             throw new \Exception("Error instantiating vent. No device set.");
         }
+    }
+
+    public function errorPresent() {
+        $res = $this->gm->command($this->config->device, 'errorPresent');
+        if ($res == 'NO') {
+            $this->errorReason = null;
+            return false;
+        }
+        $this->errorReason = $res;
+        return true;
+    }
+
+    public function errorReason() {
+        return $this->errorReason;
     }
 
     public function setOpen($percent) {

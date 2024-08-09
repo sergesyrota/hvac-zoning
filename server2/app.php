@@ -227,6 +227,14 @@ class App {
 
         // Try and do the moves
         try {
+            // First go through all vents and check if they're in the error state
+            foreach ($ventTarget as $id=>$percent) {
+                foreach ($this->ventInstance[$id] as $vent) {
+                    if ($vent->errorPresent()) {
+                        $this->log->addError("Vent {$id} error: " . $vent->errorReason());
+                    }
+                }
+            }
             foreach ($ventTarget as $id=>$percent) {
                 $ventTargetsText .= $this->zoneConfig->{"$id"}->name . " = $percent%; ";
                 foreach ($this->ventInstance[$id] as $vent) {
