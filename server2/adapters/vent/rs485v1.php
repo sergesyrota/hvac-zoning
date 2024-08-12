@@ -22,6 +22,10 @@ class RS485v1 implements iVent {
         }
     }
 
+    public function getHumanReadableName() {
+        return $this->config->device;
+    }
+
     public function errorPresent() {
         $res = $this->gm->command($this->config->device, 'errorPresent');
         if ($res == 'NO') {
@@ -50,5 +54,16 @@ class RS485v1 implements iVent {
             throw new \Exception(sprintf("Unexpected response from vent %s: '%s'", $this->config->device, $res));
         }
         return true;
+    }
+
+    public function selfHeal() {
+        if ($this->errorReason === null) {
+            return;
+        }
+        $res = $this->gm->command($this->config->device, 'calibrate');
+        sleep(6); // 10 RPM, 6 seconds for 1 full rotation
+        if ($this->errorPresent()) {
+            throw new \Exception(sprintf("Failed to self-heal vent %s; Error: %s", $this->config->device, $this->errorReason));
+        }
     }
 }

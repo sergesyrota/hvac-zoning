@@ -233,7 +233,8 @@ class App {
                 foreach ($ventTarget as $id=>$percent) {
                     foreach ($this->ventInstance[$id] as $vent) {
                         if ($vent->errorPresent()) {
-                            $this->log->addError("Vent {$id} error: " . $vent->errorReason());
+                            $this->log->addError("Vent ".$vent->getHumanReadableName()." error: " . $vent->errorReason() . "; Trying to self-heal.");
+                            $vent->selfHeal();
                         }
                     }
                 }

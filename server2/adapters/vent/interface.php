@@ -11,4 +11,10 @@ interface iVent {
 
     // Returns error reason if errorPresent() is true; Null otherwise
     public function errorReason();
+
+    // In case we're in the error state, try to self-heal by recalibrating
+    public function selfHeal();
+
+    // Returns human-readable name of the vent
+    public function getHumanReadableName();
 }
