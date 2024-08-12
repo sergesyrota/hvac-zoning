@@ -234,7 +234,12 @@ class App {
                     foreach ($this->ventInstance[$id] as $vent) {
                         if ($vent->errorPresent()) {
                             $this->log->addError("Vent ".$vent->getHumanReadableName()." error: " . $vent->errorReason() . "; Trying to self-heal.");
-                            $vent->selfHeal();
+                            if (!empty($this->state->vent_error_timestamp[$id]) && (time() - $this->state->vent_error_timestamp[$id]) < 7200) {
+                                throw new Exception("Can't self-heal vent ".$vent->getHumanReadableName()." as last attempt was too recently.");
+                            } else {
+                                $this->state->vent_error_timestamp[$id] = time();
+                                $vent->selfHeal();
+                            }
                         }
                     }
                 }
