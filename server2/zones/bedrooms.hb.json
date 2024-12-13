@@ -3,7 +3,8 @@
         "minAirflow": 4,
         "min_airflow": 4,
         "state_expiration": 1200,
-        "override_activate_time": 21600
+        "override_activate_time": 21600,
+        "check_vent_errors": true
     },
     "zones": {
         "1": {
