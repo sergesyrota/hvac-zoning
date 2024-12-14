@@ -256,7 +256,7 @@ class App {
         } catch (\Exception $e) {
             // If any of the vent moves fail
             // => moving everything to default
-            $this->log->addError("Exception moving vent {$id} for zone " . $this->zoneConfig->{"$id"}->name . ". Name: " . $vent->getHumanReadableName());
+            $this->log->addError("Exception moving vent {$id} (" . $vent->getHumanReadableName() . ") for zone " . $this->zoneConfig->{"$id"}->name);
             foreach ($this->zoneConfig as $id=>$zoneData) {
                 $this->log->addError("Resetting vents for zone " . $this->zoneConfig->{"$id"}->name . " to default " . $zoneData->defaultOpen . "%");
                 foreach ($this->ventInstance[$id] as $vent) {
