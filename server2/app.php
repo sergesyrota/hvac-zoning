@@ -175,6 +175,7 @@ class App {
             'init_time' => time(),
             'master_checksum' => '',
             'override_present' =>  false,
+            'vent_error_timestamp' => new stdClass(),
         ];
     }
 
@@ -234,10 +235,16 @@ class App {
                     foreach ($this->ventInstance[$id] as $vent) {
                         if ($vent->errorPresent()) {
                             $this->log->addError("Vent ".$vent->getHumanReadableName()." error: " . $vent->errorReason() . "; Trying to self-heal.");
-                            if (!empty($this->state->vent_error_timestamp) && !empty($this->state->vent_error_timestamp[$id]) && (time() - $this->state->vent_error_timestamp[$id]) < 7200) {
+                            if (!empty($this->state->vent_error_timestamp) && 
+                                property_exists($this->state->vent_error_timestamp, $id) && 
+                                (time() - $this->state->vent_error_timestamp->$id) < 7200) {
                                 throw new Exception("Can't self-heal vent ".$vent->getHumanReadableName()." as last attempt was too recently.");
                             } else {
-                                $this->state->vent_error_timestamp[$id] = time();
+                                // Make sure vent_error_timestamp exists
+                                if (empty($this->state->vent_error_timestamp)) {
+                                    $this->state->vent_error_timestamp = new stdClass();
+                                }
+                                $this->state->vent_error_timestamp->$id = time();
                                 $vent->selfHeal();
                             }
                         }
