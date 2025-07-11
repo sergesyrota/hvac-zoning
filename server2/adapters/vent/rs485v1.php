@@ -60,6 +60,9 @@ class RS485v1 implements iVent {
         if ($this->errorReason === null) {
             return;
         }
+        // turn back 180 degrees or so, in cse we can't turn all 360, and that being the reason for sticking
+        $res = $this->gm->command($this->config->device, 'step:-4000');
+        sleep(6); // 10 RPM, 6 seconds for 1 full rotation
         $res = $this->gm->command($this->config->device, 'calibrate');
         sleep(6); // 10 RPM, 6 seconds for 1 full rotation
         if ($this->errorPresent()) {
