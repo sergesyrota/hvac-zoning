@@ -153,7 +153,8 @@ class Homebridge {
             throw new \Exception("Error listing Homebridge accessories; Invalid response: " . $res);
         }
         foreach ($accessories as $accessory) {
-            if (($accessory['accessoryInformation']['SerialNumber'] ?? null) === $this->serialNumber) {
+            $accessorySerialNumber = isset($accessory['accessoryInformation']['SerialNumber']) ? $accessory['accessoryInformation']['SerialNumber'] : null;
+            if ($accessorySerialNumber === $this->serialNumber) {
                 $this->uniqueIdCache->{$this->serialNumber} = $accessory['uniqueId'];
                 return $accessory['uniqueId'];
             }
@@ -167,9 +168,11 @@ class Homebridge {
      */
     private function isUniqueIdNotFoundError($res) {
         $data = json_decode($res, true);
+        $statusCode = isset($data['statusCode']) ? $data['statusCode'] : null;
+        $message = isset($data['message']) ? $data['message'] : '';
         return is_array($data)
-            && ($data['statusCode'] ?? null) == 400
-            && strpos($data['message'] ?? '', 'not found') !== false;
+            && $statusCode == 400
+            && strpos($message, 'not found') !== false;
     }
 
     /**
