@@ -3,7 +3,7 @@
 namespace Thermostat;
 
 class Factory {
-    public static function get($config) {
+    public static function get($config, $state = null) {
         switch ($config->type) {
             case 'cli':
                 return new \Thermostat\Cli($config->connection);
@@ -24,7 +24,8 @@ class Factory {
                     getenv('HOMEBRIDGE_BASEURL'),
                     getenv($config->connection->username),
                     getenv($config->connection->password),
-                    getenv($config->connection->device_id)
+                    getenv($config->connection->serial_number),
+                    $state->homebridge_unique_id
                 );
                 $threshold = (isset($config->threshold) ? $config->threshold : 0);
                 return new Homebridge($connector, $threshold);

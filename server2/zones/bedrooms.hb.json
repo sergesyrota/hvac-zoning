@@ -14,7 +14,7 @@
                 "connection": {
                     "username": "HOMEBRIDGE_USERNAME",
                     "password": "HOMEBRIDGE_PASSWORD",
-                    "device_id": "HOMEBRIDGE_MASTER_THERMOSTAT"
+                    "serial_number": "HOMEBRIDGE_MASTER_THERMOSTAT"
                 }
             },
             "vents": [
@@ -35,7 +35,7 @@
                 "connection": {
                     "username": "HOMEBRIDGE_USERNAME",
                     "password": "HOMEBRIDGE_PASSWORD",
-                    "device_id": "HOMEBRIDGE_MIDDLE_THERMOSTAT"
+                    "serial_number": "HOMEBRIDGE_MIDDLE_THERMOSTAT"
                 }
             },
             "vents": [
@@ -64,7 +64,7 @@
                 "connection": {
                     "username": "HOMEBRIDGE_USERNAME",
                     "password": "HOMEBRIDGE_PASSWORD",
-                    "device_id": "HOMEBRIDGE_SOUTH_THERMOSTAT"
+                    "serial_number": "HOMEBRIDGE_SOUTH_THERMOSTAT"
                 }
             },
             "vents": [

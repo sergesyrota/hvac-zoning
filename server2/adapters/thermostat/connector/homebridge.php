@@ -11,8 +11,12 @@ class Homebridge {
     // Token and expiration
     private $authToken;
     private $tokenExpireTimestamp;
-    // UUID of "Accessory" representing the thermostat instance
-    private $accessoryId;
+    // Stable identifier for the accessory (Homebridge accessoryInformation.SerialNumber);
+    // Homebridge's own uniqueId is not stable across Homebridge restarts, so we resolve it from this instead.
+    private $serialNumber;
+    // Cache of resolved uniqueId, keyed by serial number. Shared (by reference) with App's state file,
+    // so a successful resolution here is persisted across runs.
+    private $uniqueIdCache;
     // Last update of the data locally
     private $updateTime;
     // Cached full response
@@ -25,19 +29,22 @@ class Homebridge {
      * @param string $baseURL Location of Homebridge
      * @param string $username
      * @param string $password
-     * @param string $accessoryId UUID of the thermostat in Homekit
+     * @param string $serialNumber Stable serial number of the accessory (accessoryInformation.SerialNumber via /api/accessories),
+     *                              used to resolve Homebridge's uniqueId
+     * @param \stdClass $uniqueIdCache Cache object (keyed by serial number) for resolved uniqueIds
      */
-    public function __construct($baseURL, $username, $password, $accessoryId) {
+    public function __construct($baseURL, $username, $password, $serialNumber, \stdClass $uniqueIdCache) {
         if (empty($baseURL) || empty($username) || empty($password)) {
             throw new \Exception("Base URL, username, and password are all required.");
         }
-        if (empty($accessoryId)) {
-            throw new \Exception("Accessory ID (as appears in /api/accessories) is required");
+        if (empty($serialNumber)) {
+            throw new \Exception("Serial number (accessoryInformation.SerialNumber, as appears in /api/accessories) is required");
         }
         $this->baseURL=$baseURL;
         $this->username=$username;
         $this->password=$password;
-        $this->accessoryId = $accessoryId;
+        $this->serialNumber = $serialNumber;
+        $this->uniqueIdCache = $uniqueIdCache;
     }
 
     /**
@@ -113,13 +120,67 @@ class Homebridge {
     }
 
     /**
-     * Makes an API call to Homebridge
+     * Makes an API call against this accessory's uniqueId, transparently re-resolving the uniqueId
+     * from its serial number (once) if Homebridge reports it as not found.
      *
      * @param string $method HTTP method of the API request
      * @param string $reqBody If we're making a POST/PATCH/etc data for the request to pass on
      */
     private function apiCall($method = 'GET', $reqBody = '') {
-        $url = $this->baseURL . "/api/accessories/" . $this->accessoryId;
+        $uniqueId = $this->resolveUniqueId();
+        $res = $this->apiRequest("/api/accessories/{$uniqueId}", $method, $reqBody);
+        if ($this->isUniqueIdNotFoundError($res)) {
+            $uniqueId = $this->resolveUniqueId(true);
+            $res = $this->apiRequest("/api/accessories/{$uniqueId}", $method, $reqBody);
+        }
+        return $res;
+    }
+
+    /**
+     * Resolves this accessory's current Homebridge uniqueId from its (stable) serial number.
+     * Returns the cached value unless $forceRefresh is set, in which case (or when there's no
+     * cached value yet) the full accessory list is fetched and matched by serial number.
+     *
+     * @param bool $forceRefresh Bypass the cache and re-fetch the accessory list
+     */
+    private function resolveUniqueId($forceRefresh = false) {
+        if (!$forceRefresh && isset($this->uniqueIdCache->{$this->serialNumber})) {
+            return $this->uniqueIdCache->{$this->serialNumber};
+        }
+        $res = $this->apiRequest('/api/accessories');
+        $accessories = json_decode($res, true);
+        if (!is_array($accessories)) {
+            throw new \Exception("Error listing Homebridge accessories; Invalid response: " . $res);
+        }
+        foreach ($accessories as $accessory) {
+            if (($accessory['accessoryInformation']['SerialNumber'] ?? null) === $this->serialNumber) {
+                $this->uniqueIdCache->{$this->serialNumber} = $accessory['uniqueId'];
+                return $accessory['uniqueId'];
+            }
+        }
+        throw new \Exception("No Homebridge accessory found with serial number {$this->serialNumber}");
+    }
+
+    /**
+     * Detects Homebridge's "Service with uniqueId of '...' not found" response, which happens
+     * when Homebridge regenerates uniqueIds (e.g. on restart) and our cached one is now stale.
+     */
+    private function isUniqueIdNotFoundError($res) {
+        $data = json_decode($res, true);
+        return is_array($data)
+            && ($data['statusCode'] ?? null) == 400
+            && strpos($data['message'] ?? '', 'not found') !== false;
+    }
+
+    /**
+     * Makes a raw, authenticated API request against Homebridge.
+     *
+     * @param string $path API path, e.g. "/api/accessories" or "/api/accessories/{uniqueId}"
+     * @param string $method HTTP method of the API request
+     * @param string $reqBody If we're making a POST/PATCH/etc data for the request to pass on
+     */
+    private function apiRequest($path, $method = 'GET', $reqBody = '') {
+        $url = $this->baseURL . $path;
         $headers = [
             'Authorization: Bearer ' . $this->getAuthToken(),
             'Content-type: application/json',

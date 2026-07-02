@@ -31,8 +31,8 @@ class App {
     }
 
     public function run() {
-        $this->initEquipment();
         $this->initState();
+        $this->initEquipment();
         // Target vent positions, initialize all to open
         $ventTarget = [];
         foreach ($this->tstatInstance as $id=>$tstat) {
@@ -159,6 +159,9 @@ class App {
                 $this->state = $this->getEmptyState();
                 return;
             }
+            if (empty($state->homebridge_unique_id)) {
+                $state->homebridge_unique_id = new stdClass();
+            }
             $this->state = $state;
             return;
         }
@@ -176,6 +179,8 @@ class App {
             'master_checksum' => '',
             'override_present' =>  false,
             'vent_error_timestamp' => new stdClass(),
+            // Homebridge accessory uniqueId cache, keyed by serial number (uniqueId is not stable across Homebridge restarts)
+            'homebridge_unique_id' => new stdClass(),
         ];
     }
 
@@ -190,7 +195,7 @@ class App {
 
     private function initEquipment() {
         foreach ($this->zoneConfig as $id=>$zone) {
-            $adapter = \Thermostat\Factory::get($zone->thermostat);
+            $adapter = \Thermostat\Factory::get($zone->thermostat, $this->state);
             $adapter->setLogger($this->log);
 //            $this->log->addDebug("Seconds since check-in for {$id}: " . $adapter->getSecondsSinceLastUpdate());
             $this->tstatInstance[$id] = $adapter;
