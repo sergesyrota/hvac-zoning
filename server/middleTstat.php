@@ -34,8 +34,8 @@ function getMiddleTstat() {
         throw new Exception('Middle tstat data file does not exist');
     }
     $age = time() - filemtime(DATAFILE);
-    if ($age > 600) {
-        throw new Exception('Middle tstat data file is more than 10 minutes old');
+    if ($age > 3600*24) {
+        throw new Exception('Middle tstat data file is more than 24 hours old');
     }
     $data = json_decode(file_get_contents(DATAFILE));
     if ($data === null) {

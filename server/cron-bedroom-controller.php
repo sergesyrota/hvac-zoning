@@ -107,6 +107,10 @@ function ftoc($f) {
 function getTargetGuestTemperature($mode) {
     $hour = (int)date('H');
     if ($mode == 'cool') {
+        if (time() < strtotime('2018-01-02 05:00:00')) {
+            // pre-cool
+            return ftoc(71);
+        }
         switch (date('N')) {
             case 1: // Mon
             case 2: // Tue
@@ -128,6 +132,10 @@ function getTargetGuestTemperature($mode) {
                 return;
         }
     } else {
+        // vacation
+        if (time() < strtotime('2018-01-30 20:00:00')) {
+            return ftoc(64);
+        }
         return ftoc(71);
     }
 }
@@ -146,8 +154,12 @@ function getTargetHeatTemperature()
 {
     $hour = (int)date('H');
     // Vacation
-    if (time() < strtotime('2017-06-23 16:00:00')) {
-        return ftoc(62);
+    if (time() < strtotime('2018-01-30 10:00:00')) {
+        return ftoc(64);
+    }
+    // Warm up after vacation
+    if (time() < strtotime('2018-01-30 20:00:00')) {
+        return ftoc(74);
     }
     switch (date('N')) {
         case 1: // Mon
@@ -180,9 +192,9 @@ function getTargetHeatTemperature()
 // This is hardcoded schedule; Target temp in C
 function getTargetCoolTemperature()
 {
-    // guest bedroom work
-    if (time() < strtotime('2017-07-25 18:00:00')) {
-        return ftoc(71);
+    // vacation
+    if (time() < strtotime('2017-10-21 07:00:00')) {
+        return ftoc(90);
     }
     $hour = (int)date('H');
     switch (date('N')) {
