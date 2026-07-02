@@ -11,7 +11,7 @@ class Homebridge {
     // Token and expiration
     private $authToken;
     private $tokenExpireTimestamp;
-    // Stable identifier for the accessory (Homebridge accessoryInformation.SerialNumber);
+    // Stable identifier for the accessory (Homebridge accessoryInformation's "Serial Number" field);
     // Homebridge's own uniqueId is not stable across Homebridge restarts, so we resolve it from this instead.
     private $serialNumber;
     // Cache of resolved uniqueId, keyed by serial number. Shared (by reference) with App's state file,
@@ -29,7 +29,7 @@ class Homebridge {
      * @param string $baseURL Location of Homebridge
      * @param string $username
      * @param string $password
-     * @param string $serialNumber Stable serial number of the accessory (accessoryInformation.SerialNumber via /api/accessories),
+     * @param string $serialNumber Stable serial number of the accessory (accessoryInformation's "Serial Number" field via /api/accessories),
      *                              used to resolve Homebridge's uniqueId
      * @param \stdClass $uniqueIdCache Cache object (keyed by serial number) for resolved uniqueIds
      */
@@ -38,7 +38,7 @@ class Homebridge {
             throw new \Exception("Base URL, username, and password are all required.");
         }
         if (empty($serialNumber)) {
-            throw new \Exception("Serial number (accessoryInformation.SerialNumber, as appears in /api/accessories) is required");
+            throw new \Exception('Serial number (accessoryInformation\'s "Serial Number" field, as appears in /api/accessories) is required');
         }
         $this->baseURL=$baseURL;
         $this->username=$username;
@@ -141,6 +141,12 @@ class Homebridge {
      * Returns the cached value unless $forceRefresh is set, in which case (or when there's no
      * cached value yet) the full accessory list is fetched and matched by serial number.
      *
+     * A single physical Nest thermostat exposes multiple HomeKit services (Thermostat, Fan,
+     * Eco Mode switch, ...) that all share the same accessoryInformation "Serial Number" but
+     * have distinct uniqueIds — only the "Thermostat" humanType exposes the characteristics
+     * (TargetHeatingCoolingState, TargetTemperature, ...) this class needs, so it must be
+     * matched explicitly rather than relying on API response ordering.
+     *
      * @param bool $forceRefresh Bypass the cache and re-fetch the accessory list
      */
     private function resolveUniqueId($forceRefresh = false) {
@@ -153,13 +159,14 @@ class Homebridge {
             throw new \Exception("Error listing Homebridge accessories; Invalid response: " . $res);
         }
         foreach ($accessories as $accessory) {
-            $accessorySerialNumber = isset($accessory['accessoryInformation']['SerialNumber']) ? $accessory['accessoryInformation']['SerialNumber'] : null;
-            if ($accessorySerialNumber === $this->serialNumber) {
+            $accessorySerialNumber = isset($accessory['accessoryInformation']['Serial Number']) ? $accessory['accessoryInformation']['Serial Number'] : null;
+            $humanType = isset($accessory['humanType']) ? $accessory['humanType'] : null;
+            if ($accessorySerialNumber === $this->serialNumber && $humanType === 'Thermostat') {
                 $this->uniqueIdCache->{$this->serialNumber} = $accessory['uniqueId'];
                 return $accessory['uniqueId'];
             }
         }
-        throw new \Exception("No Homebridge accessory found with serial number {$this->serialNumber}");
+        throw new \Exception("No Homebridge Thermostat accessory found with serial number {$this->serialNumber}");
     }
 
     /**

@@ -93,7 +93,7 @@ younger than 300s) before constructing `App` and calling `run()`.
 - **Homebridge accessory resolution**: Homebridge's own `uniqueId` is *not* stable across
   Homebridge restarts (it can be regenerated for many accessories at once). Zone config
   (`connection.serial_number`, an env var name like Nest's `bearer_token`) instead points at the
-  accessory's `accessoryInformation.SerialNumber`, which is stable. The connector
+  accessory's `accessoryInformation` object's `"Serial Number"` field, which is stable. The connector
   (`adapters/thermostat/connector/homebridge.php`) resolves serial number → `uniqueId` by
   fetching the full `/api/accessories` list only when needed (no cached value, or a "not found"
   400 from Homebridge on a direct-by-`uniqueId` call), caches the result in
@@ -160,3 +160,11 @@ when changing min-airflow logic.
   `zones/bedrooms.hb.json` for Homebridge) — **production uses the Homebridge (`.hb.json`)
   variant**; the Nest one is not currently live. Confirm via `.env` / `TSTATS_JSON` before
   assuming Nest-specific behavior applies.
+- **Production runs PHP 5** (the dev/local environment and `vendor/bin/phpunit` may run on a
+  newer PHP — `php -l`/`phpunit` passing locally does NOT confirm production compatibility).
+  Avoid PHP 7+ syntax in any file reachable from `cron.php`'s runtime path (i.e. everything
+  except `tests/`): no `??` null coalescing, no `?->` nullsafe, no `??=`, no scalar/return type
+  declarations (`function f(int $x): bool`), no spread operator, no arrow functions (`fn() =>`),
+  no anonymous classes. Use `isset($x) ? $x : $default` instead of `$x ?? $default`. A `??` in
+  `adapters/thermostat/connector/homebridge.php` previously caused a fatal parse error in
+  production (`E_PARSE: syntax error, unexpected '?'`).
